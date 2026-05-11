@@ -18,7 +18,13 @@ class SubscriptionPackageResource extends Resource
 {
     protected static ?string $model = SubscriptionPackage::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedArchiveBox;
+
+    protected static ?string $navigationLabel = 'Paket Langganan';
+
+    protected static string|\UnitEnum|null $navigationGroup = 'Manajemen Tenant';
+
+    protected static ?int $navigationSort = 3;
 
     protected static ?string $recordTitleAttribute = 'name';
 

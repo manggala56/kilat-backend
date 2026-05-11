@@ -5,8 +5,8 @@ namespace App\Filament\Resources\Tenants\Schemas;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\Select;
-use Filament\Forms\Components\Section;
-use Filament\Forms\Components\Group;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Group;
 use Filament\Schemas\Schema;
 
 class TenantForm
@@ -49,15 +49,12 @@ class TenantForm
                         Section::make('Pengaturan')
                             ->description('Konfigurasi paket dan status.')
                             ->schema([
-                                Select::make('subscription_plan')
+                                Select::make('subscription_package_id')
                                     ->label('Paket Langganan')
-                                    ->options([
-                                        'basic' => 'Basic',
-                                        'premium' => 'Premium',
-                                        'enterprise' => 'Enterprise',
-                                    ])
+                                    ->relationship('subscriptionPackage', 'name')
+                                    ->searchable()
+                                    ->preload()
                                     ->required()
-                                    ->default('basic')
                                     ->native(false),
                                 Select::make('status')
                                     ->label('Status')

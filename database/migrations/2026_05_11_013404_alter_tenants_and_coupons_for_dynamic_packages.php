@@ -17,6 +17,7 @@ return new class extends Migration
         });
 
         Schema::table('coupons', function (Blueprint $table) {
+            $table->dropColumn('sales_name');
             $table->enum('type', ['discount', 'penjualan'])->default('discount');
             $table->foreignId('sales_id')->nullable()->constrained('users')->nullOnDelete();
             $table->foreignId('subscription_package_id')->nullable()->constrained('subscription_packages')->nullOnDelete();
@@ -39,6 +40,7 @@ return new class extends Migration
             $table->dropForeign(['sales_id']);
             $table->dropForeign(['subscription_package_id']);
             $table->dropColumn(['type', 'sales_id', 'subscription_package_id', 'duration_in_days']);
+            $table->string('sales_name')->default('');
         });
     }
 };
