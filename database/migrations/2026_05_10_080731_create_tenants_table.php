@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('business_name');
             $table->string('store_id')->unique();
             $table->text('business_address')->nullable();
-            $table->enum('subscription_plan', ['basic', 'pro', 'enterprise'])->default('basic');
+            $table->foreignId('subscription_package_id')->nullable()->constrained('subscription_packages')->nullOnDelete();
             $table->enum('status', ['active', 'suspended'])->default('active');
             $table->timestamps();
         });

@@ -14,9 +14,12 @@ return new class extends Migration
         Schema::create('coupons', function (Blueprint $table) {
             $table->id();
             $table->string('code')->unique();
-            $table->string('sales_name');
+            $table->enum('type', ['discount', 'penjualan'])->default('discount');
             $table->integer('discount_percentage')->default(0);
             $table->integer('used_count')->default(0);
+            $table->foreignId('sales_id')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignId('subscription_package_id')->nullable()->constrained('subscription_packages')->nullOnDelete();
+            $table->integer('duration_in_days')->nullable();
             $table->boolean('is_active')->default(true);
             $table->timestamps();
         });
