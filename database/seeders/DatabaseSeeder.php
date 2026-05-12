@@ -17,19 +17,19 @@ class DatabaseSeeder extends Seeder
             'name' => 'Admin',
             'email' => 'admin@gmail.com',
             'password' => 'password',
+            'role' => 'admin',
         ]);
-        $admin->assignRole('admin');
         $owner = User::create([
             'name' => 'Owner',
             'email' => 'owner@gmail.com',
             'password' => 'password',
+            'role' => 'owner',
         ]);
-        $owner->assignRole('owner');
         $cashier = User::create([
             'name' => 'Cashier',
             'email' => 'cashier@gmail.com',
             'password' => 'password',
+            'role' => 'cashier',
         ]);
-        $cashier->assignRole('cashier');
     }
 }
