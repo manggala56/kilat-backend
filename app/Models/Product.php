@@ -20,6 +20,8 @@ class Product extends Model
         'has_variants' => 'boolean',
     ];
 
+    protected $appends = ['hpp'];
+
     public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class);
@@ -33,6 +35,23 @@ class Product extends Model
     public function variants(): HasMany
     {
         return $this->hasMany(ProductVariant::class);
+    }
+
+    public function recipeItems(): HasMany
+    {
+        return $this->hasMany(RecipeItem::class);
+    }
+
+    public function getHppAttribute()
+    {
+        // Jika produk memiliki resep, HPP adalah total dari (quantity * cost_per_unit)
+        if ($this->relationLoaded('recipeItems') || $this->recipeItems()->exists()) {
+            return $this->recipeItems->sum(function ($item) {
+                return $item->quantity * ($item->rawMaterial ? $item->rawMaterial->cost_per_unit : 0);
+            });
+        }
+        
+        return 0;
     }
 
     public function inventoryAdjustments(): HasMany

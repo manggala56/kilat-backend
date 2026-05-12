@@ -51,6 +51,14 @@ class SubscriptionPackageForm
                                     ->default(30)
                                     ->minValue(1)
                                     ->suffix('hari'),
+                                TextInput::make('max_outlets')
+                                    ->label('Maks. Outlet / Toko')
+                                    ->required()
+                                    ->numeric()
+                                    ->default(1)
+                                    ->minValue(1)
+                                    ->helperText('Jumlah maksimum toko yang bisa didaftarkan owner dengan paket ini.')
+                                    ->suffix('outlet'),
                             ]),
                         Section::make('Status')
                             ->schema([

@@ -5,7 +5,7 @@ import {
     Package, 
     Users, 
     Store, 
-    CreditCard 
+    Beaker,
 } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
@@ -21,6 +21,12 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
+import * as reports from '@/routes/owner/reports';
+import * as rawMaterials from '@/routes/owner/raw-materials';
+import * as recipes from '@/routes/owner/recipes';
+import * as rooms from '@/routes/owner/rooms';
+import * as employees from '@/routes/owner/employees';
+import * as outlets from '@/routes/owner/outlets';
 import type { NavItem } from '@/types';
 
 const mainNavItems: NavItem[] = [
@@ -30,29 +36,34 @@ const mainNavItems: NavItem[] = [
         icon: LayoutDashboard,
     },
     {
-        title: 'Transaksi',
-        href: '#',
+        title: 'Laporan Penjualan',
+        href: reports.index.url(),
         icon: ShoppingCart,
     },
     {
-        title: 'Produk & Stok',
-        href: '#',
+        title: 'Bahan Baku',
+        href: rawMaterials.index.url(),
         icon: Package,
     },
     {
-        title: 'Karyawan',
-        href: '#',
-        icon: Users,
+        title: 'Resep & BOM',
+        href: recipes.index.url(),
+        icon: Beaker,
     },
     {
-        title: 'Outlet / Cabang',
-        href: '#',
+        title: 'Manajemen Ruang (PS)',
+        href: rooms.index.url(),
         icon: Store,
     },
     {
-        title: 'Langganan',
-        href: '#',
-        icon: CreditCard,
+        title: 'Karyawan',
+        href: employees.index.url(),
+        icon: Users,
+    },
+    {
+        title: 'Manajemen Outlet',
+        href: outlets.index.url(),
+        icon: Store,
     },
 ];
 
