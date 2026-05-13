@@ -15,7 +15,7 @@ RateLimiter::for('api', function (Request $request) {
 // Base URL: {BASE_URL}/api/v1
 // ─────────────────────────────────────────────────────────────
 Route::prefix('v1')
-    ->middleware(['throttle:api', 'api.key'])
+    ->middleware(['throttle:api'])
     ->group(function () {
 
         // ── Ping ────────────────────────────────────────────
