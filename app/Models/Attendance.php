@@ -12,7 +12,7 @@ class Attendance extends Model
 
     protected $fillable = [
         'employee_id',
-        'outlet_id',
+        'tenant_id',
         'clock_in_time',
         'clock_out_time',
         'starting_cash',
@@ -28,8 +28,8 @@ class Attendance extends Model
         return $this->belongsTo(Employee::class);
     }
 
-    public function outlet(): BelongsTo
+    public function tenant(): BelongsTo
     {
-        return $this->belongsTo(Outlet::class);
+        return $this->belongsTo(Tenant::class);
     }
 }

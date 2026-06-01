@@ -17,6 +17,8 @@ class RoleMiddleware
     {
         $userRole = strtolower($request->user()?->role ?? '');
         $allowedRoles = array_map('strtolower', $roles);
+        
+        \Illuminate\Support\Facades\Log::info('RoleMiddleware check:', ['userRole' => $userRole, 'allowedRoles' => $allowedRoles]);
 
         if (!$request->user() || !in_array($userRole, $allowedRoles)) {
             if ($request->expectsJson() || $request->is('api/*')) {

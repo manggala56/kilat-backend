@@ -39,7 +39,7 @@ class AttendanceController extends Controller
 
         Attendance::create([
             'employee_id' => $user->id,
-            'outlet_id' => $user->outlet_id,
+            'tenant_id' => $user->tenant_id,
             'clock_in_time' => Carbon::parse($request->clock_in_time),
             'starting_cash' => $request->starting_cash,
         ]);
