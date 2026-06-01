@@ -62,6 +62,12 @@ Route::prefix('v1')
                 Route::put('/categories/{id}',    [\App\Http\Controllers\Api\V1\CategoryController::class, 'update']);
                 Route::delete('/categories/{id}', [\App\Http\Controllers\Api\V1\CategoryController::class, 'destroy']);
 
+                // ── Materials & Recipes ────────────────────
+                // GET /v1/materials
+                // GET /v1/recipes
+                Route::get('/materials', [\App\Http\Controllers\Api\V1\RawMaterialController::class, 'index']);
+                Route::get('/recipes', [\App\Http\Controllers\Api\V1\RecipeController::class, 'index']);
+
                 // ── Transactions ───────────────────────────
                 // #12 POST /v1/transactions         — Checkout
                 // #13 GET  /v1/transactions         — History
@@ -89,6 +95,12 @@ Route::prefix('v1')
                 // ── Employees ──────────────────────────────
                 // #21 GET /v1/employees
                 Route::get('/employees', [\App\Http\Controllers\Api\V1\EmployeeController::class, 'index']);
+
+                // ── Attendance ─────────────────────────────
+                // #22 POST /v1/attendance/clock-in
+                // #23 POST /v1/attendance/clock-out
+                Route::post('/attendance/clock-in', [\App\Http\Controllers\Api\V1\AttendanceController::class, 'clockIn']);
+                Route::post('/attendance/clock-out', [\App\Http\Controllers\Api\V1\AttendanceController::class, 'clockOut']);
 
             }); // end tenant.resolver
         }); // end auth:sanctum
