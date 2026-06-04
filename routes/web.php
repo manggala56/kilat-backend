@@ -8,7 +8,7 @@ Route::inertia('/', 'welcome', [
 ])->name('home');
 
 Route::middleware(['auth', 'verified', 'role:owner'])->group(function () {
-    Route::inertia('dashboard', 'dashboard')->name('dashboard');
+    Route::get('dashboard', [\App\Http\Controllers\Owner\DashboardController::class, 'index'])->name('dashboard');
 
     // --- Owner Portal: Modul 2 ---
     Route::prefix('owner')->name('owner.')->group(function () {

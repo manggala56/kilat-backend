@@ -35,7 +35,7 @@ const StatCard = ({ title, value, trend, icon: Icon, description }: any) => (
     </div>
 );
 
-export default function Dashboard() {
+export default function Dashboard({ stats, recent_transactions, top_products }: any) {
     return (
         <>
             <Head title="Dashboard" />
@@ -48,7 +48,7 @@ export default function Dashboard() {
                             Business Overview
                         </h1>
                         <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em]">
-                            Live Analytics • Terakhir Update 14:20
+                            Live Analytics • Terakhir Update Hari Ini
                         </p>
                     </div>
                     <div className="flex items-center gap-3">
@@ -63,10 +63,10 @@ export default function Dashboard() {
 
                 {/* STATS GRID */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 md:gap-8">
-                    <StatCard title="Sales Today" value="Rp 12,45 Jt" trend={12.5} icon={TrendingUp} description="Dibandingkan kemarin" />
-                    <StatCard title="Orders" value="458" trend={8.2} icon={ShoppingCart} description="Rata-rata 38/jam" />
-                    <StatCard title="Active Staff" value="12/15" trend={0} icon={Users} description="Semua cabang aktif" />
-                    <StatCard title="Low Stock" value="03" trend={-2.4} icon={Package} description="Item butuh restok" />
+                    <StatCard title="Sales Today" value={stats?.sales_today || "Rp 0"} trend={0} icon={TrendingUp} description="Hari ini" />
+                    <StatCard title="Orders" value={stats?.orders_today || 0} trend={0} icon={ShoppingCart} description="Transaksi Hari Ini" />
+                    <StatCard title="Active Staff" value={stats?.active_staff || "0/0"} trend={0} icon={Users} description="Staff aktif" />
+                    <StatCard title="Low Stock" value={stats?.low_stock || "0"} trend={0} icon={Package} description="Item butuh restok" />
                 </div>
 
                 <div className="grid grid-cols-1 xl:grid-cols-3 gap-10">
@@ -81,29 +81,29 @@ export default function Dashboard() {
                                 <thead>
                                     <tr className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground border-b border-border">
                                         <th className="pb-6 px-2">ID</th>
-                                        <th className="pb-6 px-2">Customer</th>
+                                        <th className="pb-6 px-2">Cashier</th>
                                         <th className="pb-6 px-2">Amount</th>
                                         <th className="pb-6 px-2 text-right">Status</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-border">
-                                    {[
-                                        { id: '#KLT-9921', name: 'Budi Santoso', total: 'Rp 150.000', status: 'Success' },
-                                        { id: '#KLT-9920', name: 'Santi Wijaya', total: 'Rp 85.000', status: 'Success' },
-                                        { id: '#KLT-9919', name: 'Andi Pratama', total: 'Rp 1.200.000', status: 'Pending' },
-                                        { id: '#KLT-9918', name: 'Rina Kartika', total: 'Rp 45.000', status: 'Success' },
-                                    ].map((row, i) => (
+                                    {recent_transactions?.map((row: any, i: number) => (
                                         <tr key={i} className="group cursor-pointer hover:bg-muted/50 transition-colors">
                                             <td className="py-6 px-2 text-sm font-black italic text-muted-foreground group-hover:text-primary">{row.id}</td>
                                             <td className="py-6 px-2 text-sm font-bold text-foreground/80">{row.name}</td>
                                             <td className="py-6 px-2 text-sm font-black">{row.total}</td>
                                             <td className="py-6 px-2 text-right">
-                                                <span className={`px-4 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest ${row.status === 'Success' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-amber-500/10 text-amber-500'}`}>
+                                                <span className={`px-4 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest ${row.status === 'Completed' || row.status === 'Success' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-amber-500/10 text-amber-500'}`}>
                                                     {row.status}
                                                 </span>
                                             </td>
                                         </tr>
                                     ))}
+                                    {(!recent_transactions || recent_transactions.length === 0) && (
+                                        <tr>
+                                            <td colSpan={4} className="py-8 text-center text-muted-foreground text-sm font-medium italic">Belum ada transaksi</td>
+                                        </tr>
+                                    )}
                                 </tbody>
                             </table>
                         </div>
@@ -113,17 +113,14 @@ export default function Dashboard() {
                     <div className="rounded-[3rem] border border-border p-8 bg-card shadow-sm">
                         <h3 className="text-xl font-black tracking-tight uppercase italic mb-10">Top Sales</h3>
                         <div className="space-y-10">
-                            {[
-                                { name: 'Kopi Gula Aren', sales: 145, img: '☕️', percent: 75 },
-                                { name: 'Croissant Almond', sales: 89, img: '🥐', percent: 45 },
-                                { name: 'Beef Burger', sales: 76, img: '🍔', percent: 38 },
-                                { name: 'Matcha Latte', sales: 54, img: '🍵', percent: 25 },
-                            ].map((item, i) => (
+                            {(!top_products || top_products.length === 0) ? (
+                                <div className="text-center py-10 text-muted-foreground italic text-sm">Data belum tersedia</div>
+                            ) : top_products.map((item: any, i: number) => (
                                 <div key={i} className="space-y-4">
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-4">
                                             <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-xl bg-secondary border border-border shadow-sm">
-                                                {item.img}
+                                                {item.img || '📦'}
                                             </div>
                                             <div>
                                                 <p className="text-sm font-black tracking-tight">{item.name}</p>
