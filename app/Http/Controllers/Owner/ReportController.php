@@ -26,6 +26,29 @@ class ReportController extends Controller
             ->selectRaw('SUM(total_amount) as total_sales, COUNT(*) as transaction_count')
             ->first();
 
+        // Hitung Total HPP (COGS) dari produk yang terjual hari ini
+        $totalCogs = DB::table('transaction_items as ti')
+            ->join('transactions as t', 't.id', '=', 'ti.transaction_id')
+            ->where('t.tenant_id', $tenant->id)
+            ->where('t.status', 'completed')
+            ->whereDate('t.transacted_at', $date)
+            ->sum(DB::raw('ti.quantity * ti.hpp_snapshot')); 
+
+        $grossProfit = ($dailyStats->total_sales ?? 0) - $totalCogs;
+
+        // Hitung Pengeluaran harian
+        $dailyExpenses = \App\Models\Expense::where('tenant_id', $tenant->id)
+            ->whereDate('expense_date', $date)
+            ->sum('amount');
+
+        // Hitung Payroll harian (opsional, jika ada payroll yang dibayar hari ini)
+        $dailyPayrolls = \App\Models\Payroll::where('tenant_id', $tenant->id)
+            ->where('status', 'paid')
+            ->whereDate('updated_at', $date)
+            ->sum('net_salary');
+
+        $netProfit = $grossProfit - $dailyExpenses - $dailyPayrolls;
+
         // Top 10 produk
         $topProducts = DB::table('transaction_items as ti')
             ->join('transactions as t', 't.id', '=', 'ti.transaction_id')
@@ -58,6 +81,11 @@ class ReportController extends Controller
             'dailyStats'    => [
                 'total_sales'       => (float) ($dailyStats->total_sales ?? 0),
                 'transaction_count' => (int) ($dailyStats->transaction_count ?? 0),
+                'gross_profit'      => (float) $grossProfit,
+                'net_profit'        => (float) $netProfit,
+                'total_expenses'    => (float) $dailyExpenses,
+                'total_payrolls'    => (float) $dailyPayrolls,
+                'total_cogs'        => (float) $totalCogs,
             ],
             'topProducts'   => $topProducts,
             'weeklyRevenue' => $weeklyRevenue,

@@ -13,7 +13,7 @@ import { toast } from 'sonner';
 import * as recipes from '@/routes/owner/recipes';
 
 export default function RecipesIndex({ products, rawMaterials, filters }: { products: any, rawMaterials: any, filters: any }) {
-    const [search, setSearch] = useState(filters.search || '');
+    const [search, setSearch] = useState(filters?.search || '');
     const [isRecipeModalOpen, setIsRecipeModalOpen] = useState(false);
     const [selectedProduct, setSelectedProduct] = useState<any>(null);
     const [recipeItems, setRecipeItems] = useState<any[]>([]);

@@ -18,7 +18,7 @@ export default function ProductsIndex({ products, categories, filters }: any) {
     const [isOpen, setIsOpen] = useState(false);
     const [isEdit, setIsEdit] = useState(false);
     const [currentId, setCurrentId] = useState<number | null>(null);
-    const [form, setForm] = useState({ name: '', category_id: '', sku: '', price: '', stock: '' });
+    const [form, setForm] = useState({ name: '', category_id: '', sku: '', price: '', stock: '', margin_percentage: '' });
 
     const breadcrumbs = [
         { title: 'Dashboard', href: '/dashboard' },
@@ -43,7 +43,7 @@ export default function ProductsIndex({ products, categories, filters }: any) {
             router.post('/owner/products', form, {
                 onSuccess: () => {
                     setIsOpen(false);
-                    setForm({ name: '', category_id: '', sku: '', price: '', stock: '' });
+                    setForm({ name: '', category_id: '', sku: '', price: '', stock: '', margin_percentage: '' });
                     toast.success('Produk berhasil ditambahkan');
                 },
             });
@@ -58,7 +58,8 @@ export default function ProductsIndex({ products, categories, filters }: any) {
             category_id: prod.category_id?.toString() || '', 
             sku: prod.sku || '', 
             price: prod.price?.toString() || '', 
-            stock: prod.stock?.toString() || '' 
+            stock: prod.stock?.toString() || '',
+            margin_percentage: prod.margin_percentage?.toString() || ''
         });
         setIsOpen(true);
     };
@@ -104,7 +105,7 @@ export default function ProductsIndex({ products, categories, filters }: any) {
                         </form>
                         <Dialog open={isOpen} onOpenChange={setIsOpen}>
                             <DialogTrigger asChild>
-                                <Button onClick={() => { setIsEdit(false); setForm({ name: '', category_id: '', sku: '', price: '', stock: '' }); }} className="bg-[#FEB400] text-black hover:bg-[#e0a000] w-full sm:w-auto">
+                                <Button onClick={() => { setIsEdit(false); setForm({ name: '', category_id: '', sku: '', price: '', stock: '', margin_percentage: '' }); }} className="bg-[#FEB400] text-black hover:bg-[#e0a000] w-full sm:w-auto">
                                     <Plus className="mr-2 h-4 w-4" /> Tambah Produk
                                 </Button>
                             </DialogTrigger>
@@ -134,8 +135,12 @@ export default function ProductsIndex({ products, categories, filters }: any) {
                                             <Input value={form.sku} onChange={(e) => setForm({ ...form, sku: e.target.value })} />
                                         </div>
                                         <div className="space-y-2">
-                                            <Label>Harga Jual</Label>
-                                            <Input type="number" required value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} />
+                                            <Label>Harga Jual (Manual)</Label>
+                                            <Input type="number" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} placeholder="Kosongkan jika pakai margin" />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label>Margin Persentase (%)</Label>
+                                            <Input type="number" step="0.01" value={form.margin_percentage} onChange={(e) => setForm({ ...form, margin_percentage: e.target.value })} placeholder="Opsional (Misal: 20)" />
                                         </div>
                                         <div className="space-y-2">
                                             <Label>Stok Awal</Label>

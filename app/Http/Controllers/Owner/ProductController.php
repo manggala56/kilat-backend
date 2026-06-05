@@ -44,7 +44,8 @@ class ProductController extends Controller
             'category_id' => 'nullable|integer|exists:categories,id',
             'sku' => 'nullable|string|unique:products,sku',
             'description' => 'nullable|string',
-            'price' => 'required|numeric|min:0',
+            'price' => 'nullable|numeric|min:0',
+            'margin_percentage' => 'nullable|numeric|min:0',
             'stock' => 'required|integer|min:0',
             'low_stock_threshold' => 'nullable|integer|min:0',
             'has_variants' => 'boolean',
@@ -60,12 +61,23 @@ class ProductController extends Controller
             $imagePath = $request->file('image')->store("tenants/{$tenant->id}/products", 'public');
         }
 
-        $product = Product::create([
+        $productData = [
             ...$validated,
             'tenant_id' => $tenant->id,
             'sku' => $validated['sku'] ?? 'SKU-' . strtoupper(Str::random(8)),
             'image' => $imagePath,
-        ]);
+        ];
+
+        // Hitung harga dari margin persentase jika ada (catatan: produk baru belum punya resep)
+        $marginPercentage = $request->input('margin_percentage');
+        if ($marginPercentage !== null && $marginPercentage !== '') {
+            $hpp = 0; // Karena produk baru belum punya recipeItems
+            $productData['price'] = $hpp + ($hpp * ($marginPercentage / 100));
+        } elseif (!isset($productData['price'])) {
+            $productData['price'] = 0;
+        }
+
+        $product = Product::create($productData);
 
         if (!empty($validated['variants'])) {
             foreach ($validated['variants'] as $variant) {
@@ -86,7 +98,8 @@ class ProductController extends Controller
             'category_id' => 'nullable|integer|exists:categories,id',
             'sku' => 'nullable|string|unique:products,sku,' . $product->id,
             'description' => 'nullable|string',
-            'price' => 'sometimes|numeric|min:0',
+            'price' => 'sometimes|nullable|numeric|min:0',
+            'margin_percentage' => 'nullable|numeric|min:0',
             'stock' => 'sometimes|integer|min:0',
             'low_stock_threshold' => 'nullable|integer|min:0',
             'is_active' => 'boolean',
@@ -95,6 +108,12 @@ class ProductController extends Controller
 
         if ($request->hasFile('image')) {
             $validated['image'] = $request->file('image')->store("tenants/{$tenant->id}/products", 'public');
+        }
+
+        $marginPercentage = $request->input('margin_percentage');
+        if ($marginPercentage !== null && $marginPercentage !== '') {
+            $hpp = $product->hpp ?? 0;
+            $validated['price'] = $hpp + ($hpp * ($marginPercentage / 100));
         }
 
         $product->update($validated);

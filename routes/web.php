@@ -42,6 +42,13 @@ Route::middleware(['auth', 'verified', 'role:owner'])->group(function () {
         Route::put('/employees/{employee}', [\App\Http\Controllers\Owner\EmployeeController::class, 'update'])->name('employees.update');
         Route::delete('/employees/{employee}', [\App\Http\Controllers\Owner\EmployeeController::class, 'destroy'])->name('employees.destroy');
 
+        // --- Modul HR & Payroll ---
+        Route::get('/attendances', [\App\Http\Controllers\Owner\AttendanceController::class, 'index'])->name('attendances.index');
+        
+        Route::resource('shifts', \App\Http\Controllers\Owner\ShiftController::class)->except(['create', 'show', 'edit']);
+        Route::resource('payrolls', \App\Http\Controllers\Owner\PayrollController::class)->except(['create', 'show', 'edit']);
+        Route::resource('expenses', \App\Http\Controllers\Owner\ExpenseController::class)->except(['create', 'show', 'edit']);
+
         // --- Modul 4: Reports ---
         Route::get('/reports', [\App\Http\Controllers\Owner\ReportController::class, 'index'])->name('reports.index');
 

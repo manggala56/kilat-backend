@@ -41,6 +41,11 @@ const mainNavItems: NavItem[] = [
         icon: ShoppingCart,
     },
     {
+        title: 'Katalog Produk',
+        href: '/owner/products',
+        icon: Package,
+    },
+    {
         title: 'Bahan Baku',
         href: rawMaterials.index.url(),
         icon: Package,
@@ -59,6 +64,21 @@ const mainNavItems: NavItem[] = [
         title: 'Karyawan',
         href: employees.index.url(),
         icon: Users,
+    },
+    {
+        title: 'Absensi & Shift',
+        href: '/owner/attendances', // I will just use string routes for simplicity
+        icon: Users,
+    },
+    {
+        title: 'Penggajian',
+        href: '/owner/payrolls',
+        icon: Users,
+    },
+    {
+        title: 'Pengeluaran',
+        href: '/owner/expenses',
+        icon: Store,
     },
     {
         title: 'Manajemen Outlet',

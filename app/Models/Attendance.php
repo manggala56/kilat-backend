@@ -13,6 +13,7 @@ class Attendance extends Model
     protected $fillable = [
         'employee_id',
         'tenant_id',
+        'shift_id',
         'clock_in_time',
         'clock_out_time',
         'starting_cash',
@@ -31,5 +32,10 @@ class Attendance extends Model
     public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class);
+    }
+    
+    public function shift(): BelongsTo
+    {
+        return $this->belongsTo(Shift::class);
     }
 }

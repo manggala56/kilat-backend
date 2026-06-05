@@ -70,37 +70,47 @@ export default function ReportsIndex({ date, dailyStats, topProducts, weeklyReve
                     </form>
                 </div>
 
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 mt-2">
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mt-2">
                     <Card className="bg-gradient-to-br from-[#FEB400]/20 to-transparent border-[#FEB400]/50">
                         <CardHeader className="flex flex-row items-center justify-between pb-2">
-                            <CardTitle className="text-sm font-medium">Pendapatan Hari Ini</CardTitle>
+                            <CardTitle className="text-sm font-medium">Laba Bersih (Net)</CardTitle>
                             <BadgeDollarSign className="h-5 w-5 text-[#FEB400]" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-3xl font-bold text-[#FEB400]">{formatRupiah(dailyStats.total_sales)}</div>
-                            <p className="text-xs text-muted-foreground mt-1">Pada {date}</p>
+                            <div className="text-3xl font-bold text-[#FEB400]">{formatRupiah(dailyStats.net_profit)}</div>
+                            <p className="text-xs text-muted-foreground mt-1">Laba kotor dikurangi biaya & gaji</p>
                         </CardContent>
                     </Card>
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between pb-2">
-                            <CardTitle className="text-sm font-medium">Total Transaksi</CardTitle>
+                            <CardTitle className="text-sm font-medium">Laba Kotor (Gross)</CardTitle>
+                            <TrendingUp className="h-5 w-5 text-green-500" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-3xl font-bold text-green-600">{formatRupiah(dailyStats.gross_profit)}</div>
+                            <p className="text-xs text-muted-foreground mt-1">Penjualan dikurangi HPP</p>
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between pb-2">
+                            <CardTitle className="text-sm font-medium">Total Penjualan</CardTitle>
                             <ReceiptText className="h-5 w-5 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-3xl font-bold">{dailyStats.transaction_count} <span className="text-lg font-normal text-muted-foreground">struk</span></div>
-                            <p className="text-xs text-muted-foreground mt-1">Struk tercetak hari ini</p>
+                            <div className="text-3xl font-bold">{formatRupiah(dailyStats.total_sales)}</div>
+                            <p className="text-xs text-muted-foreground mt-1">{dailyStats.transaction_count} Transaksi ({date})</p>
                         </CardContent>
                     </Card>
                     <Card className="hidden lg:block">
                         <CardHeader className="flex flex-row items-center justify-between pb-2">
-                            <CardTitle className="text-sm font-medium">Rata-rata per Transaksi</CardTitle>
-                            <TrendingUp className="h-5 w-5 text-muted-foreground" />
+                            <CardTitle className="text-sm font-medium">Total Pengeluaran</CardTitle>
+                            <TrendingUp className="h-5 w-5 text-red-500" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-3xl font-bold">
-                                {formatRupiah(dailyStats.transaction_count > 0 ? dailyStats.total_sales / dailyStats.transaction_count : 0)}
+                            <div className="text-3xl font-bold text-red-500">
+                                {formatRupiah(dailyStats.total_expenses + dailyStats.total_payrolls)}
                             </div>
-                            <p className="text-xs text-muted-foreground mt-1">Average order value (AOV)</p>
+                            <p className="text-xs text-muted-foreground mt-1">Pengeluaran harian + payroll</p>
                         </CardContent>
                     </Card>
                 </div>
