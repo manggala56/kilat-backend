@@ -25,7 +25,10 @@ class TenantResolverMiddleware
             ], 400);
         }
 
-        $tenant = Tenant::where('store_id', $storeAlias)->where('status', 'active')->first();
+        $tenant = Tenant::where(function($query) use ($storeAlias) {
+            $query->where('store_id', $storeAlias)
+                  ->orWhere('id', $storeAlias);
+        })->where('status', 'active')->first();
 
         if (!$tenant) {
             return response()->json([
