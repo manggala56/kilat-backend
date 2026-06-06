@@ -39,7 +39,8 @@ class PosController extends Controller
             $itemsData = [];
 
             foreach ($validated['items'] as $item) {
-                $product = Product::where('tenant_id', $tenant->id)
+                $product = Product::with('recipeItems.rawMaterial')
+                    ->where('tenant_id', $tenant->id)
                     ->findOrFail($item['product_id']);
 
                 $unitPrice = $product->price;
@@ -60,6 +61,13 @@ class PosController extends Controller
                         abort(422, "Stok produk '{$product->name}' tidak cukup.");
                     }
                     $product->decrement('stock', $item['quantity']);
+                }
+
+                // Deduct raw materials
+                foreach ($product->recipeItems as $recipeItem) {
+                    if ($recipeItem->rawMaterial) {
+                        $recipeItem->rawMaterial->decrement('stock', $recipeItem->quantity * $item['quantity']);
+                    }
                 }
 
                 $itemSubtotal = $unitPrice * $item['quantity'];
@@ -137,7 +145,8 @@ class PosController extends Controller
                     $itemsData = [];
 
                     foreach ($txData['items'] as $item) {
-                        $product = Product::where('tenant_id', $tenant->id)
+                        $product = Product::with('recipeItems.rawMaterial')
+                            ->where('tenant_id', $tenant->id)
                             ->findOrFail($item['product_id']);
 
                         $unitPrice = $product->price;
@@ -148,6 +157,13 @@ class PosController extends Controller
                             $variant->decrement('stock', $item['quantity']);
                         } else {
                             $product->decrement('stock', $item['quantity']);
+                        }
+
+                        // Deduct raw materials
+                        foreach ($product->recipeItems as $recipeItem) {
+                            if ($recipeItem->rawMaterial) {
+                                $recipeItem->rawMaterial->decrement('stock', $recipeItem->quantity * $item['quantity']);
+                            }
                         }
 
                         $itemSubtotal = $unitPrice * $item['quantity'];

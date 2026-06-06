@@ -11,8 +11,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import * as recipes from '@/routes/owner/recipes';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 
-export default function RecipesIndex({ products, rawMaterials, filters }: { products: any, rawMaterials: any, filters: any }) {
+export default function RecipesIndex({ products, rawMaterials, unitConversions, filters }: { products: any, rawMaterials: any, unitConversions: any[], filters: any }) {
+    return (
+        <ErrorBoundary>
+            <RecipesIndexContent products={products} rawMaterials={rawMaterials} unitConversions={unitConversions} filters={filters} />
+        </ErrorBoundary>
+    );
+}
+
+function RecipesIndexContent({ products, rawMaterials, unitConversions, filters }: { products: any, rawMaterials: any, unitConversions: any[], filters: any }) {
     const [search, setSearch] = useState(filters?.search || '');
     const [isRecipeModalOpen, setIsRecipeModalOpen] = useState(false);
     const [selectedProduct, setSelectedProduct] = useState<any>(null);
@@ -53,7 +62,7 @@ export default function RecipesIndex({ products, rawMaterials, filters }: { prod
         setRecipeItems(items);
     };
 
-    const updateRecipeRow = (index: number, field: string, value: string) => {
+    const updateRecipeRow = (index: number, field: string, value: string | number) => {
         const items = [...recipeItems];
         items[index][field] = value;
         setRecipeItems(items);
@@ -62,13 +71,21 @@ export default function RecipesIndex({ products, rawMaterials, filters }: { prod
     const calculateTotalHpp = () => {
         return recipeItems.reduce((total, item) => {
             if (!item.raw_material_id || !item.quantity) return total;
-            const rm = rawMaterials.find((r: any) => r.id.toString() === item.raw_material_id);
-            return total + (rm ? parseFloat(item.quantity) * parseFloat(rm.cost_per_unit) : 0);
+            const rm = rawMaterials?.find((r: any) => r?.id?.toString() === item.raw_material_id);
+            const baseQuantity = parseFloat(item.quantity) * (item.multiplier || 1);
+            return total + (rm ? baseQuantity * parseFloat(rm.cost_per_unit) : 0);
         }, 0);
     };
 
     const saveRecipe = () => {
-        const validItems = recipeItems.filter(item => item.raw_material_id && item.quantity && parseFloat(item.quantity) > 0);
+        const validItems = recipeItems
+            .filter(item => item.raw_material_id && item.quantity && parseFloat(item.quantity) > 0)
+            .map(item => ({
+                raw_material_id: item.raw_material_id,
+                quantity: (parseFloat(item.quantity) * (item.multiplier || 1)).toString()
+            }));
+            
+        if (!selectedProduct?.id) return;
         router.put(recipes.update.url(selectedProduct.id), { recipe_items: validItems }, {
             onSuccess: () => { setIsRecipeModalOpen(false); toast.success('Resep produk berhasil disimpan'); },
             onError: () => toast.error('Terjadi kesalahan saat menyimpan resep')
@@ -109,14 +126,15 @@ export default function RecipesIndex({ products, rawMaterials, filters }: { prod
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {products.data.map((product: any) => {
+                                {products?.data?.map((product: any, idx: number) => {
+                                    if (!product) return null;
                                     const hpp = parseFloat(product.hpp || 0);
                                     const price = parseFloat(product.price);
                                     const margin = price > 0 ? ((price - hpp) / price * 100).toFixed(1) : 0;
                                     const isLoss = hpp > price;
 
                                     return (
-                                        <TableRow key={product.id}>
+                                        <TableRow key={product.id || idx}>
                                             <TableCell className="font-medium">
                                                 {product.name}
                                                 {product.recipe_items?.length > 0 && (
@@ -172,31 +190,57 @@ export default function RecipesIndex({ products, rawMaterials, filters }: { prod
                         {recipeItems.length > 0 ? (
                             <div className="space-y-3">
                                 <div className="grid grid-cols-12 gap-2 text-xs font-semibold text-muted-foreground px-1">
-                                    <div className="col-span-6">Bahan Baku</div>
-                                    <div className="col-span-3">Kuantitas</div>
+                                    <div className="col-span-5">Bahan Baku</div>
+                                    <div className="col-span-4">Kuantitas & Satuan</div>
                                     <div className="col-span-2 text-right">Biaya</div>
                                     <div className="col-span-1"></div>
                                 </div>
                                 {recipeItems.map((item, index) => {
-                                    const rm = rawMaterials.find((r: any) => r.id.toString() === item.raw_material_id);
-                                    const cost = rm && item.quantity ? parseFloat(item.quantity) * parseFloat(rm.cost_per_unit) : 0;
+                                    const rm = rawMaterials?.find((r: any) => r?.id?.toString() === item.raw_material_id);
+                                    
+                                    const getAvailableUnits = (baseUnit: string) => {
+                                        const unit = (baseUnit || '').toLowerCase();
+                                        const units = [{ label: unit || 'unit', value: 1 }];
+                                        
+                                        const conversions = unitConversions?.filter((c: any) => c.base_unit.toLowerCase() === unit) || [];
+                                        conversions.forEach((c: any) => {
+                                            units.push({
+                                                label: c.target_unit,
+                                                value: 1 / parseFloat(c.conversion_rate)
+                                            });
+                                        });
+
+                                        return units;
+                                    };
+                                    
+                                    const availableUnits = getAvailableUnits(rm?.unit || '');
+                                    const baseQuantity = parseFloat(item.quantity || '0') * parseFloat(item.multiplier || '1');
+                                    const cost = rm && baseQuantity > 0 ? baseQuantity * parseFloat(rm.cost_per_unit) : 0;
+
                                     return (
                                         <div key={index} className="grid grid-cols-12 gap-2 items-center">
-                                            <div className="col-span-6">
-                                                <Select value={item.raw_material_id} onValueChange={(v) => updateRecipeRow(index, 'raw_material_id', v)}>
-                                                    <SelectTrigger><SelectValue placeholder="Pilih bahan baku" /></SelectTrigger>
+                                            <div className="col-span-5">
+                                                <Select value={item.raw_material_id} onValueChange={(v) => { updateRecipeRow(index, 'raw_material_id', v); updateRecipeRow(index, 'multiplier', 1); }}>
+                                                    <SelectTrigger><SelectValue placeholder="Bahan baku" /></SelectTrigger>
                                                     <SelectContent>
-                                                        {rawMaterials.map((r: any) => (
+                                                        {rawMaterials?.map((r: any) => r ? (
                                                             <SelectItem key={r.id} value={r.id.toString()}>
                                                                 {r.name} ({formatRupiah(r.cost_per_unit)}/{r.unit})
                                                             </SelectItem>
-                                                        ))}
+                                                        ) : null)}
                                                     </SelectContent>
                                                 </Select>
                                             </div>
-                                            <div className="col-span-3 flex items-center gap-1">
-                                                <Input type="number" step="0.01" min="0" value={item.quantity} onChange={(e) => updateRecipeRow(index, 'quantity', e.target.value)} placeholder="Qty" />
-                                                <span className="text-xs text-muted-foreground w-6">{rm?.unit || '-'}</span>
+                                            <div className="col-span-4 flex items-center gap-1">
+                                                <Input type="number" step="any" min="0" value={item.quantity} onChange={(e) => updateRecipeRow(index, 'quantity', e.target.value)} placeholder="Qty" className="flex-1" />
+                                                <Select value={(item.multiplier || 1).toString()} onValueChange={(v) => updateRecipeRow(index, 'multiplier', parseFloat(v))}>
+                                                    <SelectTrigger className="w-[80px] px-2 h-9 text-xs"><SelectValue /></SelectTrigger>
+                                                    <SelectContent>
+                                                        {availableUnits.map((u, i) => (
+                                                            <SelectItem key={i} value={u.value.toString()}>{u.label}</SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
                                             </div>
                                             <div className="col-span-2 text-right font-medium text-sm">{formatRupiah(cost)}</div>
                                             <div className="col-span-1 text-right">

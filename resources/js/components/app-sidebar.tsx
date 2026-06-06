@@ -51,15 +51,16 @@ const mainNavItems: NavItem[] = [
         icon: Package,
     },
     {
+        title: 'Konversi Satuan',
+        href: '/owner/unit-conversions',
+        icon: Package,
+    },
+    {
         title: 'Resep & BOM',
         href: recipes.index.url(),
         icon: Beaker,
     },
-    {
-        title: 'Manajemen Ruang (PS)',
-        href: rooms.index.url(),
-        icon: Store,
-    },
+
     {
         title: 'Karyawan',
         href: employees.index.url(),

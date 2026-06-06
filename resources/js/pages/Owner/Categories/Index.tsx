@@ -9,12 +9,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Plus, Edit2, Trash2, Tags } from 'lucide-react';
 import { toast } from 'sonner';
+import { Badge } from '@/components/ui/badge';
 
 export default function CategoriesIndex({ categories }: any) {
     const [isOpen, setIsOpen] = useState(false);
     const [isEdit, setIsEdit] = useState(false);
     const [currentId, setCurrentId] = useState<number | null>(null);
-    const [form, setForm] = useState({ name: '', description: '' });
+    const [form, setForm] = useState({ name: '', description: '', type: 'OTHER' });
 
     const breadcrumbs = [
         { title: 'Dashboard', href: '/dashboard' },
@@ -34,7 +35,7 @@ export default function CategoriesIndex({ categories }: any) {
             router.post('/owner/categories', form, {
                 onSuccess: () => {
                     setIsOpen(false);
-                    setForm({ name: '', description: '' });
+                    setForm({ name: '', description: '', type: 'OTHER' });
                     toast.success('Kategori berhasil ditambahkan');
                 },
             });
@@ -44,7 +45,7 @@ export default function CategoriesIndex({ categories }: any) {
     const handleEdit = (cat: any) => {
         setIsEdit(true);
         setCurrentId(cat.id);
-        setForm({ name: cat.name, description: cat.description || '' });
+        setForm({ name: cat.name, description: cat.description || '', type: cat.type || 'OTHER' });
         setIsOpen(true);
     };
 
@@ -67,7 +68,7 @@ export default function CategoriesIndex({ categories }: any) {
                     </div>
                     <Dialog open={isOpen} onOpenChange={setIsOpen}>
                         <DialogTrigger asChild>
-                            <Button onClick={() => { setIsEdit(false); setForm({ name: '', description: '' }); }} className="bg-[#FEB400] text-black hover:bg-[#e0a000]">
+                            <Button onClick={() => { setIsEdit(false); setForm({ name: '', description: '', type: 'OTHER' }); }} className="bg-[#FEB400] text-black hover:bg-[#e0a000]">
                                 <Plus className="mr-2 h-4 w-4" /> Tambah Kategori
                             </Button>
                         </DialogTrigger>
@@ -79,6 +80,20 @@ export default function CategoriesIndex({ categories }: any) {
                                 <div className="space-y-2">
                                     <Label>Nama Kategori</Label>
                                     <Input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Cth: Minuman Dingin" />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>Tipe Kategori</Label>
+                                    <select 
+                                        required 
+                                        value={form.type} 
+                                        onChange={(e) => setForm({ ...form, type: e.target.value })} 
+                                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                                    >
+                                        <option value="FOOD">Makanan (FOOD)</option>
+                                        <option value="DRINK">Minuman (DRINK)</option>
+                                        <option value="ROOM">Sewa Ruangan (ROOM)</option>
+                                        <option value="OTHER">Lainnya (OTHER)</option>
+                                    </select>
                                 </div>
                                 <div className="space-y-2">
                                     <Label>Deskripsi (Opsional)</Label>
@@ -103,6 +118,7 @@ export default function CategoriesIndex({ categories }: any) {
                             <TableHeader>
                                 <TableRow>
                                     <TableHead>Nama Kategori</TableHead>
+                                    <TableHead>Tipe</TableHead>
                                     <TableHead>Deskripsi</TableHead>
                                     <TableHead className="text-center">Jumlah Produk</TableHead>
                                     <TableHead className="text-right">Aksi</TableHead>
@@ -112,6 +128,11 @@ export default function CategoriesIndex({ categories }: any) {
                                 {categories.map((cat: any) => (
                                     <TableRow key={cat.id}>
                                         <TableCell className="font-medium">{cat.name}</TableCell>
+                                        <TableCell>
+                                            <Badge variant={cat.type === 'ROOM' ? 'default' : cat.type === 'FOOD' ? 'secondary' : 'outline'}>
+                                                {cat.type || 'OTHER'}
+                                            </Badge>
+                                        </TableCell>
                                         <TableCell className="text-muted-foreground">{cat.description || '-'}</TableCell>
                                         <TableCell className="text-center">
                                             <span className="inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-[#FEB400] bg-orange-100 rounded-full">

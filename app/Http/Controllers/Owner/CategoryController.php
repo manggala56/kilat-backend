@@ -30,6 +30,7 @@ class CategoryController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
+            'type' => 'required|string|in:FOOD,DRINK,ROOM,OTHER',
         ]);
 
         Category::create([
@@ -48,6 +49,7 @@ class CategoryController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
+            'type' => 'required|string|in:FOOD,DRINK,ROOM,OTHER',
             'is_active' => 'boolean',
         ]);
 

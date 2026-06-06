@@ -27,10 +27,12 @@ class RecipeController extends Controller
         
         // HPP dipanggil otomatis via accessor $appends = ['hpp'] di model Product
         $rawMaterials = RawMaterial::where('tenant_id', $tenant->id)->where('is_active', true)->get();
+        $unitConversions = \App\Models\UnitConversion::where('tenant_id', $tenant->id)->get();
 
         return Inertia::render('Owner/Products/Recipes', [
             'products' => $products,
             'rawMaterials' => $rawMaterials,
+            'unitConversions' => $unitConversions,
             'filters' => $request->only('search')
         ]);
     }

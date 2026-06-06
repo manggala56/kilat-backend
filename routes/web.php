@@ -54,6 +54,7 @@ Route::middleware(['auth', 'verified', 'role:owner'])->group(function () {
 
         // Inventory & RnD (BOM)
         Route::resource('raw-materials', \App\Http\Controllers\Owner\RawMaterialController::class)->except(['create', 'show', 'edit']);
+        Route::resource('unit-conversions', \App\Http\Controllers\Owner\UnitConversionController::class)->except(['create', 'show', 'edit']);
         Route::get('recipes', [\App\Http\Controllers\Owner\RecipeController::class, 'index'])->name('recipes.index');
         Route::put('recipes/{product}', [\App\Http\Controllers\Owner\RecipeController::class, 'update'])->name('recipes.update');
 
