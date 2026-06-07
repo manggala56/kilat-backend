@@ -45,33 +45,36 @@ class TransactionController extends Controller
             ]);
 
             foreach ($validated['items'] as $item) {
-                TransactionItem::create([
-                    'transaction_id' => $transaction->id,
-                    'product_id'     => $item['product_id'],
-                    'quantity'       => $item['quantity'],
-                    'unit_price'     => $item['unit_price'],
-                    'subtotal'       => $item['subtotal'],
-                ]);
-
-                // Cek apakah produk punya resep
+                // Cek apakah produk punya resep dan ambil data product
                 $product = Product::with('recipeItems.rawMaterial')
                     ->where('id', $item['product_id'])
                     ->where('tenant_id', $tenant->id)
                     ->first();
 
-                if ($product) {
-                    if ($product->recipeItems->isNotEmpty()) {
-                        // Kurangi stok bahan mentah (Raw Materials)
-                        foreach ($product->recipeItems as $recipe) {
-                            if ($recipe->rawMaterial) {
-                                $deduction = $recipe->quantity * $item['quantity'];
-                                $recipe->rawMaterial->decrement('stock', $deduction);
-                            }
+                if (!$product) {
+                    throw new \Exception("Product not found");
+                }
+
+                TransactionItem::create([
+                    'transaction_id' => $transaction->id,
+                    'product_id'     => $item['product_id'],
+                    'product_name'   => $product->name,
+                    'quantity'       => $item['quantity'],
+                    'unit_price'     => $item['unit_price'],
+                    'subtotal'       => $item['subtotal'],
+                ]);
+
+                if ($product->recipeItems->isNotEmpty()) {
+                    // Kurangi stok bahan mentah (Raw Materials)
+                    foreach ($product->recipeItems as $recipe) {
+                        if ($recipe->rawMaterial) {
+                            $deduction = $recipe->quantity * $item['quantity'];
+                            $recipe->rawMaterial->decrement('stock', $deduction);
                         }
-                    } else {
-                        // Kurangi stok produk secara langsung (Perilaku default)
-                        $product->decrement('stock', $item['quantity']);
                     }
+                } else {
+                    // Kurangi stok produk secara langsung (Perilaku default)
+                    $product->decrement('stock', $item['quantity']);
                 }
             }
 

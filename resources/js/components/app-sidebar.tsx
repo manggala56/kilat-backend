@@ -46,6 +46,11 @@ const mainNavItems: NavItem[] = [
         icon: Package,
     },
     {
+        title: 'Kategori',
+        href: '/owner/categories',
+        icon: Package,
+    },
+    {
         title: 'Bahan Baku',
         href: rawMaterials.index.url(),
         icon: Package,
