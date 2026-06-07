@@ -20,9 +20,11 @@ class RawMaterialController extends Controller
         }
 
         $rawMaterials = $query->orderBy('name')->paginate(10)->withQueryString();
+        $unitConversions = \App\Models\UnitConversion::where('tenant_id', $tenant->id)->get();
 
         return Inertia::render('Owner/RawMaterials/Index', [
             'rawMaterials' => $rawMaterials,
+            'unitConversions' => $unitConversions,
             'filters'      => $request->only('search'),
         ]);
     }

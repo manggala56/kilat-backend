@@ -202,12 +202,18 @@ function RecipesIndexContent({ products, rawMaterials, unitConversions, filters 
                                         const unit = (baseUnit || '').toLowerCase();
                                         const units = [{ label: unit || 'unit', value: 1 }];
                                         
-                                        const conversions = unitConversions?.filter((c: any) => c.base_unit.toLowerCase() === unit) || [];
-                                        conversions.forEach((c: any) => {
-                                            units.push({
-                                                label: c.target_unit,
-                                                value: 1 / parseFloat(c.conversion_rate)
-                                            });
+                                        unitConversions?.forEach((c: any) => {
+                                            if (c.base_unit.toLowerCase() === unit) {
+                                                units.push({
+                                                    label: c.target_unit.toLowerCase(),
+                                                    value: 1 / parseFloat(c.conversion_rate)
+                                                });
+                                            } else if (c.target_unit.toLowerCase() === unit) {
+                                                units.push({
+                                                    label: c.base_unit.toLowerCase(),
+                                                    value: parseFloat(c.conversion_rate)
+                                                });
+                                            }
                                         });
 
                                         return units;

@@ -19,7 +19,7 @@ class ProductController extends Controller
             ->where('tenant_id', $tenant->id)
             ->when($request->search, fn ($q) => $q->where('name', 'like', "%{$request->search}%")
                 ->orWhere('sku', 'like', "%{$request->search}%"))
-            ->when($request->category_id, fn ($q) => $q->where('category_id', $request->category_id))
+            ->when($request->category_id && $request->category_id !== 'all', fn ($q) => $q->where('category_id', $request->category_id))
             ->orderByDesc('created_at')
             ->paginate(20)
             ->withQueryString();

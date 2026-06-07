@@ -23,7 +23,7 @@ interface RawMaterial {
     is_active: boolean;
 }
 
-export default function RawMaterialsIndex({ rawMaterials: rawData, filters }: { rawMaterials: any, filters: any }) {
+export default function RawMaterialsIndex({ rawMaterials: rawData, unitConversions, filters }: { rawMaterials: any, unitConversions?: any[], filters: any }) {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingItem, setEditingItem] = useState<RawMaterial | null>(null);
     const [search, setSearch] = useState(filters.search || '');
@@ -177,17 +177,21 @@ export default function RawMaterialsIndex({ rawMaterials: rawData, filters }: { 
                                 </div>
                                 <div className="grid gap-2">
                                     <Label htmlFor="unit">Satuan Unit</Label>
-                                    <Select value={formData.unit} onValueChange={v => setFormData({...formData, unit: v})}>
-                                        <SelectTrigger><SelectValue /></SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="gram">Gram (g)</SelectItem>
-                                            <SelectItem value="kg">Kilogram (kg)</SelectItem>
-                                            <SelectItem value="ml">Mililiter (ml)</SelectItem>
-                                            <SelectItem value="liter">Liter (L)</SelectItem>
-                                            <SelectItem value="pcs">Pieces (pcs)</SelectItem>
-                                            <SelectItem value="cup">Cup</SelectItem>
-                                        </SelectContent>
-                                    </Select>
+                                    <Input id="unit" list="unit-options" placeholder="Contoh: gram, kg, pcs" value={formData.unit} onChange={e => setFormData({...formData, unit: e.target.value.toLowerCase()})} required />
+                                    <datalist id="unit-options">
+                                        <option value="gram" />
+                                        <option value="kg" />
+                                        <option value="ml" />
+                                        <option value="liter" />
+                                        <option value="pcs" />
+                                        <option value="cup" />
+                                        {unitConversions?.map((c: any) => (
+                                            <React.Fragment key={c.id}>
+                                                <option value={c.base_unit} />
+                                                <option value={c.target_unit} />
+                                            </React.Fragment>
+                                        ))}
+                                    </datalist>
                                 </div>
                             </div>
                             <div className="grid grid-cols-2 gap-4">
