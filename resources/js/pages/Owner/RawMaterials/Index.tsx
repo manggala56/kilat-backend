@@ -177,21 +177,18 @@ export default function RawMaterialsIndex({ rawMaterials: rawData, unitConversio
                                 </div>
                                 <div className="grid gap-2">
                                     <Label htmlFor="unit">Satuan Unit</Label>
-                                    <Input id="unit" list="unit-options" placeholder="Contoh: gram, kg, pcs" value={formData.unit} onChange={e => setFormData({...formData, unit: e.target.value.toLowerCase()})} required />
-                                    <datalist id="unit-options">
-                                        <option value="gram" />
-                                        <option value="kg" />
-                                        <option value="ml" />
-                                        <option value="liter" />
-                                        <option value="pcs" />
-                                        <option value="cup" />
-                                        {unitConversions?.map((c: any) => (
-                                            <React.Fragment key={c.id}>
-                                                <option value={c.base_unit} />
-                                                <option value={c.target_unit} />
-                                            </React.Fragment>
-                                        ))}
-                                    </datalist>
+                                    <Select value={formData.unit} onValueChange={v => setFormData({...formData, unit: v})}>
+                                        <SelectTrigger><SelectValue placeholder="Pilih Satuan" /></SelectTrigger>
+                                        <SelectContent>
+                                            {Array.from(new Set([
+                                                'gram', 'kg', 'ml', 'liter', 'pcs', 'cup',
+                                                ...(unitConversions || []).map((c: any) => c.base_unit.toLowerCase()),
+                                                ...(unitConversions || []).map((c: any) => c.target_unit.toLowerCase())
+                                            ])).map(u => (
+                                                <SelectItem key={u} value={u}>{u.charAt(0).toUpperCase() + u.slice(1)}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
                                 </div>
                             </div>
                             <div className="grid grid-cols-2 gap-4">
