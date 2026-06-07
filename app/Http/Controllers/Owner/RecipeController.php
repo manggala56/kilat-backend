@@ -45,7 +45,8 @@ class RecipeController extends Controller
         $validated = $request->validate([
             'recipe_items' => 'array',
             'recipe_items.*.raw_material_id' => 'required|exists:raw_materials,id',
-            'recipe_items.*.quantity' => 'required|numeric|min:0.01',
+            'recipe_items.*.quantity' => 'required|numeric|min:0.0001',
+            'recipe_items.*.unit' => 'nullable|string|max:50',
         ]);
 
         DB::beginTransaction();
@@ -60,6 +61,7 @@ class RecipeController extends Controller
                         'product_id' => $product->id,
                         'raw_material_id' => $item['raw_material_id'],
                         'quantity' => $item['quantity'],
+                        'unit' => $item['unit'] ?? null,
                         'created_at' => now(),
                         'updated_at' => now(),
                     ];

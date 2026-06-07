@@ -40,14 +40,53 @@ function RecipesIndexContent({ products, rawMaterials, unitConversions, filters 
     const formatRupiah = (amount: number) =>
         new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(amount);
 
+    const getAvailableUnits = (baseUnit: string) => {
+        const unit = (baseUnit || '').toLowerCase();
+        const units = [{ label: unit || 'unit', value: 1 }];
+        
+        unitConversions?.forEach((c: any) => {
+            if (c.base_unit.toLowerCase() === unit) {
+                units.push({
+                    label: c.target_unit.toLowerCase(),
+                    value: 1 / parseFloat(c.conversion_rate)
+                });
+            } else if (c.target_unit.toLowerCase() === unit) {
+                units.push({
+                    label: c.base_unit.toLowerCase(),
+                    value: parseFloat(c.conversion_rate)
+                });
+            }
+        });
+
+        return units;
+    };
+
     const openRecipeModal = (product: any) => {
         setSelectedProduct(product);
         if (product.recipe_items && product.recipe_items.length > 0) {
-            setRecipeItems(product.recipe_items.map((item: any) => ({
-                raw_material_id: item.raw_material_id.toString(),
-                quantity: item.quantity,
-                raw_material: item.raw_material
-            })));
+            setRecipeItems(product.recipe_items.map((item: any) => {
+                const rm = rawMaterials?.find((r: any) => r?.id?.toString() === item.raw_material_id.toString());
+                const availableUnits = rm ? getAvailableUnits(rm.unit) : [];
+                
+                let multiplier = 1;
+                let displayQuantity = parseFloat(item.quantity) || 0;
+                
+                if (item.unit) {
+                    const foundUnit = availableUnits.find((u: any) => u.label.toLowerCase() === item.unit.toLowerCase());
+                    if (foundUnit) {
+                        multiplier = foundUnit.value;
+                        displayQuantity = displayQuantity / multiplier;
+                    }
+                }
+                
+                return {
+                    raw_material_id: item.raw_material_id.toString(),
+                    quantity: displayQuantity.toString(),
+                    multiplier: multiplier,
+                    unit_label: item.unit || '',
+                    raw_material: item.raw_material
+                };
+            }));
         } else {
             setRecipeItems([]);
         }
@@ -80,10 +119,17 @@ function RecipesIndexContent({ products, rawMaterials, unitConversions, filters 
     const saveRecipe = () => {
         const validItems = recipeItems
             .filter(item => item.raw_material_id && item.quantity && parseFloat(item.quantity) > 0)
-            .map(item => ({
-                raw_material_id: item.raw_material_id,
-                quantity: (parseFloat(item.quantity) * (item.multiplier || 1)).toString()
-            }));
+            .map(item => {
+                const rm = rawMaterials?.find((r: any) => r?.id?.toString() === item.raw_material_id);
+                const availableUnits = rm ? getAvailableUnits(rm.unit) : [];
+                const foundUnit = availableUnits.find((u: any) => u.value.toString() === (item.multiplier || 1).toString());
+                
+                return {
+                    raw_material_id: item.raw_material_id,
+                    quantity: (parseFloat(item.quantity) * (item.multiplier || 1)).toString(),
+                    unit: foundUnit ? foundUnit.label : null
+                };
+            });
             
         if (!selectedProduct?.id) return;
         router.put(recipes.update.url(selectedProduct.id), { recipe_items: validItems }, {
