@@ -10,11 +10,25 @@ import { Label } from '@/components/ui/label';
 import { Plus, Edit2, Trash2, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 
-export default function ShiftsIndex({ shifts }: any) {
+import { Pagination } from '@/components/Pagination';
+import { useEffect } from 'react';
+import { Search } from 'lucide-react';
+
+export default function ShiftsIndex({ shifts, filters }: any) {
+    const [search, setSearch] = useState(filters?.search || '');
     const [isOpen, setIsOpen] = useState(false);
     const [isEdit, setIsEdit] = useState(false);
     const [currentId, setCurrentId] = useState<number | null>(null);
     const [form, setForm] = useState({ name: '', start_time: '', end_time: '' });
+
+    useEffect(() => {
+        const delay = setTimeout(() => {
+            if (search !== filters?.search) {
+                router.get('/owner/shifts', { search }, { preserveState: true, replace: true });
+            }
+        }, 300);
+        return () => clearTimeout(delay);
+    }, [search]);
 
     const breadcrumbs = [
         { title: 'Dashboard', href: '/dashboard' },
@@ -70,12 +84,23 @@ export default function ShiftsIndex({ shifts }: any) {
                         <p className="text-muted-foreground text-sm">Kelola jadwal shift untuk karyawan (HR).</p>
                     </div>
                     
-                    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-                        <DialogTrigger asChild>
-                            <Button onClick={() => { setIsEdit(false); setForm({ name: '', start_time: '', end_time: '' }); }} className="bg-[#FEB400] text-black hover:bg-[#e0a000]">
-                                <Plus className="mr-2 h-4 w-4" /> Tambah Shift
-                            </Button>
-                        </DialogTrigger>
+                    <div className="flex items-center gap-2">
+                        <div className="relative">
+                            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                            <Input
+                                type="search"
+                                placeholder="Cari nama shift..."
+                                className="pl-8 w-full md:w-[250px]"
+                                value={search}
+                                onChange={e => setSearch(e.target.value)}
+                            />
+                        </div>
+                        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+                            <DialogTrigger asChild>
+                                <Button onClick={() => { setIsEdit(false); setForm({ name: '', start_time: '', end_time: '' }); }} className="bg-[#FEB400] text-black hover:bg-[#e0a000]">
+                                    <Plus className="mr-2 h-4 w-4" /> Tambah Shift
+                                </Button>
+                            </DialogTrigger>
                         <DialogContent>
                             <DialogHeader>
                                 <DialogTitle>{isEdit ? 'Edit Shift' : 'Buat Shift Baru'}</DialogTitle>
@@ -102,8 +127,9 @@ export default function ShiftsIndex({ shifts }: any) {
                         </DialogContent>
                     </Dialog>
                 </div>
+            </div>
 
-                <Card className="mt-2">
+            <Card className="mt-2">
                     <CardHeader className="bg-muted/30 pb-4">
                         <CardTitle className="text-lg flex items-center gap-2">
                             <Clock className="h-5 w-5 text-muted-foreground" /> Daftar Shift
@@ -120,7 +146,7 @@ export default function ShiftsIndex({ shifts }: any) {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {shifts.map((shift: any) => (
+                                {shifts.data.map((shift: any) => (
                                     <TableRow key={shift.id}>
                                         <TableCell className="font-medium">{shift.name}</TableCell>
                                         <TableCell>{shift.start_time}</TableCell>
@@ -137,7 +163,7 @@ export default function ShiftsIndex({ shifts }: any) {
                                         </TableCell>
                                     </TableRow>
                                 ))}
-                                {shifts.length === 0 && (
+                                {shifts.data.length === 0 && (
                                     <TableRow>
                                         <TableCell colSpan={4} className="h-24 text-center text-muted-foreground">Tidak ada shift ditemukan.</TableCell>
                                     </TableRow>
@@ -146,6 +172,7 @@ export default function ShiftsIndex({ shifts }: any) {
                         </Table>
                     </CardContent>
                 </Card>
+                <Pagination links={shifts?.links} />
             </div>
         </AppLayout>
     );

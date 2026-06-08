@@ -13,6 +13,9 @@ import { toast } from 'sonner';
 import * as recipes from '@/routes/owner/recipes';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 
+import { useEffect } from 'react';
+import { Pagination } from '@/components/Pagination';
+
 export default function RecipesIndex({ products, rawMaterials, unitConversions, filters }: { products: any, rawMaterials: any, unitConversions: any[], filters: any }) {
     return (
         <ErrorBoundary>
@@ -26,6 +29,15 @@ function RecipesIndexContent({ products, rawMaterials, unitConversions, filters 
     const [isRecipeModalOpen, setIsRecipeModalOpen] = useState(false);
     const [selectedProduct, setSelectedProduct] = useState<any>(null);
     const [recipeItems, setRecipeItems] = useState<any[]>([]);
+
+    useEffect(() => {
+        const delay = setTimeout(() => {
+            if (search !== filters?.search) {
+                router.get(recipes.index.url(), { search }, { preserveState: true, replace: true });
+            }
+        }, 300);
+        return () => clearTimeout(delay);
+    }, [search]);
 
     const breadcrumbs = [
         { title: 'Dashboard', href: '/dashboard' },
@@ -216,6 +228,7 @@ function RecipesIndexContent({ products, rawMaterials, unitConversions, filters 
                         </Table>
                     </CardContent>
                 </Card>
+                <Pagination links={products.links} />
             </div>
 
             <Dialog open={isRecipeModalOpen} onOpenChange={setIsRecipeModalOpen}>

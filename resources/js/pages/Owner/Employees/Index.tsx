@@ -12,6 +12,9 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import * as employees from '@/routes/owner/employees';
 
+import { Pagination } from '@/components/Pagination';
+import { useEffect } from 'react';
+
 interface Employee {
     id: number;
     name: string;
@@ -24,6 +27,15 @@ export default function EmployeesIndex({ employees: employeeData, filters }: { e
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingEmp, setEditingEmp] = useState<Employee | null>(null);
     const [search, setSearch] = useState(filters.search || '');
+
+    useEffect(() => {
+        const delay = setTimeout(() => {
+            if (search !== filters?.search) {
+                router.get(employees.index.url(), { search }, { preserveState: true, replace: true });
+            }
+        }, 300);
+        return () => clearTimeout(delay);
+    }, [search]);
 
     const [formData, setFormData] = useState({
         name: '',
@@ -179,6 +191,7 @@ export default function EmployeesIndex({ employees: employeeData, filters }: { e
                         </div>
                     )}
                 </div>
+                <Pagination links={employeeData?.links} />
             </div>
 
             <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>

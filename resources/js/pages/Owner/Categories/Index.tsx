@@ -7,15 +7,27 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Plus, Edit2, Trash2, Tags } from 'lucide-react';
+import { Plus, Edit2, Trash2, Tags, Search } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
+import { Pagination } from '@/components/Pagination';
+import { useEffect } from 'react';
 
-export default function CategoriesIndex({ categories }: any) {
+export default function CategoriesIndex({ categories, filters }: any) {
     const [isOpen, setIsOpen] = useState(false);
     const [isEdit, setIsEdit] = useState(false);
     const [currentId, setCurrentId] = useState<number | null>(null);
     const [form, setForm] = useState({ name: '', description: '', type: 'OTHER' });
+    const [search, setSearch] = useState(filters?.search || '');
+
+    useEffect(() => {
+        const delay = setTimeout(() => {
+            if (search !== filters?.search) {
+                router.get('/owner/categories', { search }, { preserveState: true, replace: true });
+            }
+        }, 300);
+        return () => clearTimeout(delay);
+    }, [search]);
 
     const breadcrumbs = [
         { title: 'Dashboard', href: '/dashboard' },
@@ -66,12 +78,23 @@ export default function CategoriesIndex({ categories }: any) {
                         <h2 className="text-2xl font-bold tracking-tight text-[#FEB400]">Manajemen Kategori</h2>
                         <p className="text-muted-foreground text-sm">Kelola kategori produk untuk mempermudah transaksi.</p>
                     </div>
-                    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-                        <DialogTrigger asChild>
-                            <Button onClick={() => { setIsEdit(false); setForm({ name: '', description: '', type: 'OTHER' }); }} className="bg-[#FEB400] text-black hover:bg-[#e0a000]">
-                                <Plus className="mr-2 h-4 w-4" /> Tambah Kategori
-                            </Button>
-                        </DialogTrigger>
+                    <div className="flex items-center gap-2">
+                        <div className="relative">
+                            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                            <Input 
+                                type="search" 
+                                placeholder="Cari kategori..." 
+                                className="pl-8 w-full md:w-[250px]" 
+                                value={search} 
+                                onChange={e => setSearch(e.target.value)} 
+                            />
+                        </div>
+                        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+                            <DialogTrigger asChild>
+                                <Button onClick={() => { setIsEdit(false); setForm({ name: '', description: '', type: 'OTHER' }); }} className="bg-[#FEB400] text-black hover:bg-[#e0a000] shrink-0">
+                                    <Plus className="mr-2 h-4 w-4" /> Tambah Kategori
+                                </Button>
+                            </DialogTrigger>
                         <DialogContent>
                             <DialogHeader>
                                 <DialogTitle>{isEdit ? 'Edit Kategori' : 'Kategori Baru'}</DialogTitle>
@@ -105,6 +128,7 @@ export default function CategoriesIndex({ categories }: any) {
                             </form>
                         </DialogContent>
                     </Dialog>
+                    </div>
                 </div>
 
                 <Card className="mt-2">
@@ -125,7 +149,7 @@ export default function CategoriesIndex({ categories }: any) {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {categories.map((cat: any) => (
+                                {categories.data.map((cat: any) => (
                                     <TableRow key={cat.id}>
                                         <TableCell className="font-medium">{cat.name}</TableCell>
                                         <TableCell>
@@ -151,15 +175,16 @@ export default function CategoriesIndex({ categories }: any) {
                                         </TableCell>
                                     </TableRow>
                                 ))}
-                                {categories.length === 0 && (
+                                {categories.data.length === 0 && (
                                     <TableRow>
-                                        <TableCell colSpan={4} className="h-24 text-center text-muted-foreground">Belum ada kategori ditambahkan.</TableCell>
+                                        <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">Belum ada kategori ditambahkan.</TableCell>
                                     </TableRow>
                                 )}
                             </TableBody>
                         </Table>
                     </CardContent>
                 </Card>
+                <Pagination links={categories.links} />
             </div>
         </AppLayout>
     );

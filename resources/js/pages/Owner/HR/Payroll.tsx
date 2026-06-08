@@ -12,6 +12,9 @@ import { Plus, CheckCircle, Trash2, Banknote, Search } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 
+import { Pagination } from '@/components/Pagination';
+import { useEffect } from 'react';
+
 export default function PayrollIndex({ payrolls, employees, filters }: any) {
     const [search, setSearch] = useState(filters.search || '');
     const [isOpen, setIsOpen] = useState(false);
@@ -24,6 +27,15 @@ export default function PayrollIndex({ payrolls, employees, filters }: any) {
         deductions: '0', 
         status: 'pending' 
     });
+
+    useEffect(() => {
+        const delay = setTimeout(() => {
+            if (search !== filters?.search) {
+                router.get('/owner/payrolls', { search }, { preserveState: true, replace: true });
+            }
+        }, 300);
+        return () => clearTimeout(delay);
+    }, [search]);
 
     const breadcrumbs = [
         { title: 'Dashboard', href: '/dashboard' },
@@ -213,6 +225,7 @@ export default function PayrollIndex({ payrolls, employees, filters }: any) {
                         </Table>
                     </CardContent>
                 </Card>
+                <Pagination links={payrolls?.links} />
             </div>
         </AppLayout>
     );

@@ -11,6 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Plus, Edit2, Trash2, Package, Search } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
+import { Pagination } from '@/components/Pagination';
+import { useEffect } from 'react';
 
 export default function ProductsIndex({ products, categories, filters }: any) {
     const [search, setSearch] = useState(filters.search || '');
@@ -19,6 +21,15 @@ export default function ProductsIndex({ products, categories, filters }: any) {
     const [isEdit, setIsEdit] = useState(false);
     const [currentId, setCurrentId] = useState<number | null>(null);
     const [form, setForm] = useState({ name: '', category_id: '', sku: '', price: '', stock: '', margin_percentage: '' });
+
+    useEffect(() => {
+        const delay = setTimeout(() => {
+            if (search !== filters?.search || categoryId !== filters?.category_id) {
+                router.get('/owner/products', { search, category_id: categoryId }, { preserveState: true, replace: true });
+            }
+        }, 300);
+        return () => clearTimeout(delay);
+    }, [search, categoryId]);
 
     const breadcrumbs = [
         { title: 'Dashboard', href: '/dashboard' },
@@ -209,6 +220,7 @@ export default function ProductsIndex({ products, categories, filters }: any) {
                         </Table>
                     </CardContent>
                 </Card>
+                <Pagination links={products.links} />
             </div>
         </AppLayout>
     );

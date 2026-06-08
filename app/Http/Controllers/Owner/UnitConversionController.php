@@ -15,12 +15,18 @@ class UnitConversionController extends Controller
         $tenant = $request->user()->tenant ?? abort(403);
 
         $conversions = UnitConversion::where('tenant_id', $tenant->id)
+            ->when($request->search, function ($query, $search) {
+                $query->where('base_unit', 'like', "%{$search}%")
+                      ->orWhere('target_unit', 'like', "%{$search}%");
+            })
             ->orderBy('base_unit')
             ->orderBy('target_unit')
-            ->get();
+            ->paginate(10)
+            ->withQueryString();
 
         return Inertia::render('Owner/UnitConversions/Index', [
             'conversions' => $conversions,
+            'filters' => $request->only('search'),
         ]);
     }
 

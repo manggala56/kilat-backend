@@ -15,6 +15,9 @@ class RoomController extends Controller
         $tenant = $request->user()->tenants()->first() ?? abort(403);
 
         $rooms = Room::where('tenant_id', $tenant->id)
+            ->when($request->search, function ($q, $search) {
+                $q->where('name', 'like', "%{$search}%");
+            })
             ->withCount(['sessions as total_sessions'])
             ->with(['sessions' => fn ($q) => $q->where('status', 'ACTIVE')->latest()->limit(1)])
             ->orderBy('name')
@@ -23,6 +26,7 @@ class RoomController extends Controller
 
         return Inertia::render('Owner/Rooms/Index', [
             'rooms' => $rooms,
+            'filters' => $request->only('search'),
         ]);
     }
 
@@ -89,12 +93,17 @@ class RoomController extends Controller
         abort_unless($room->tenant_id === $tenant->id, 403);
 
         $sessions = RoomSession::where('room_id', $room->id)
+            ->when($request->search, function ($q, $search) {
+                $q->where('customer_name', 'like', "%{$search}%");
+            })
             ->orderByDesc('start_time')
-            ->paginate(20);
+            ->paginate(20)
+            ->withQueryString();
 
         return Inertia::render('Owner/Rooms/Sessions', [
             'room'     => $room,
             'sessions' => $sessions,
+            'filters'  => $request->only('search'),
         ]);
     }
 }

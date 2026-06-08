@@ -8,8 +8,20 @@ import { Button } from '@/components/ui/button';
 import { Users, Search, Clock, CalendarDays } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
+import { Pagination } from '@/components/Pagination';
+import { useEffect } from 'react';
+
 export default function AttendanceIndex({ attendances, filters }: any) {
     const [search, setSearch] = useState(filters.search || '');
+
+    useEffect(() => {
+        const delay = setTimeout(() => {
+            if (search !== filters?.search) {
+                router.get('/owner/attendances', { search }, { preserveState: true, replace: true });
+            }
+        }, 300);
+        return () => clearTimeout(delay);
+    }, [search]);
 
     const breadcrumbs = [
         { title: 'Dashboard', href: '/dashboard' },
@@ -117,6 +129,7 @@ export default function AttendanceIndex({ attendances, filters }: any) {
                         </Table>
                     </CardContent>
                 </Card>
+                <Pagination links={attendances?.links} />
             </div>
         </AppLayout>
     );

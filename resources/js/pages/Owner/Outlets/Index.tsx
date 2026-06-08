@@ -1,14 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Head, router } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Plus, Edit, Store, CheckCircle, XCircle, Lock } from 'lucide-react';
+import { Plus, Edit, Store, CheckCircle, XCircle, Lock, Search } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
+import { Pagination } from '@/components/Pagination';
 import * as outlets from '@/routes/owner/outlets';
 
 interface Tenant {
@@ -28,15 +29,27 @@ export default function OutletsIndex({
     maxOutlets,
     packages,
     canAdd,
+    filters,
 }: {
-    tenants: Tenant[];
+    tenants: any;
     maxOutlets: number;
     packages: any[];
     canAdd: boolean;
+    filters?: any;
 }) {
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [editingTenant, setEditingTenant] = useState<Tenant | null>(null);
+    const [search, setSearch] = useState(filters?.search || '');
+
+    useEffect(() => {
+        const delay = setTimeout(() => {
+            if (search !== filters?.search) {
+                router.get(outlets.index.url(), { search }, { preserveState: true, replace: true });
+            }
+        }, 300);
+        return () => clearTimeout(delay);
+    }, [search]);
 
     const [formData, setFormData] = useState({
         business_name: '',
@@ -101,9 +114,14 @@ export default function OutletsIndex({
         }
     };
 
-    const usedSlots  = tenants.length;
+    const usedSlots  = tenants?.data?.length || 0;
     const totalSlots = maxOutlets;
     const percentage = Math.round((usedSlots / totalSlots) * 100);
+
+    const handleSearch = (e: React.FormEvent) => {
+        e.preventDefault();
+        router.get(outlets.index.url(), { search }, { preserveState: true });
+    };
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -111,21 +129,27 @@ export default function OutletsIndex({
 
             <div className="flex h-full flex-1 flex-col gap-6 p-4 md:p-8 max-w-7xl mx-auto w-full">
                 {/* Header */}
-                <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
                         <h2 className="text-2xl font-bold tracking-tight text-[#FEB400]">Manajemen Outlet</h2>
                         <p className="text-muted-foreground text-sm">Daftarkan dan kelola semua cabang toko Anda.</p>
                     </div>
 
-                    {canAdd ? (
-                        <Button onClick={openAddModal} className="bg-[#FEB400] text-black hover:bg-[#e0a000] shrink-0">
-                            <Plus className="mr-2 h-4 w-4" /> Tambah Outlet
-                        </Button>
-                    ) : (
-                        <Button disabled className="shrink-0 opacity-70">
-                            <Lock className="mr-2 h-4 w-4" /> Batas Outlet Tercapai
-                        </Button>
-                    )}
+                    <div className="flex items-center gap-2">
+                        <form onSubmit={handleSearch} className="flex relative">
+                            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                            <Input type="search" placeholder="Cari outlet..." className="pl-8 w-full md:w-[250px]" value={search} onChange={e => setSearch(e.target.value)} />
+                        </form>
+                        {canAdd ? (
+                            <Button onClick={openAddModal} className="bg-[#FEB400] text-black hover:bg-[#e0a000] shrink-0">
+                                <Plus className="mr-2 h-4 w-4" /> Tambah Outlet
+                            </Button>
+                        ) : (
+                            <Button disabled className="shrink-0 opacity-70">
+                                <Lock className="mr-2 h-4 w-4" /> Batas Outlet Tercapai
+                            </Button>
+                        )}
+                    </div>
                 </div>
 
                 {/* Slot Usage Card */}
@@ -155,7 +179,7 @@ export default function OutletsIndex({
 
                 {/* Outlet Cards */}
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                    {tenants.map((t) => (
+                    {tenants?.data?.map((t: any) => (
                         <Card
                             key={t.id}
                             className={`overflow-hidden border-t-4 transition-all ${
@@ -211,7 +235,13 @@ export default function OutletsIndex({
                             </CardContent>
                         </Card>
                     ))}
+                    {tenants?.data?.length === 0 && (
+                        <div className="col-span-full py-12 text-center text-muted-foreground bg-muted/20 rounded-lg border border-dashed">
+                            Belum ada data outlet.
+                        </div>
+                    )}
                 </div>
+                <Pagination links={tenants?.links} />
 
                 {/* Upgrade promo (jika sudah full) */}
                 {!canAdd && packages.length > 0 && (

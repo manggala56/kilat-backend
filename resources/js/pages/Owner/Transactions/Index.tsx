@@ -9,11 +9,28 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Search, FileText, TrendingUp, ShoppingCart, DollarSign, Eye } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
+import { Pagination } from '@/components/Pagination';
+import { useEffect } from 'react';
+
 export default function TransactionsIndex({ transactions, stats, filters }: any) {
     const [search, setSearch] = useState(filters.search || '');
     const [status, setStatus] = useState(filters.status || 'all');
     const [dateFrom, setDateFrom] = useState(filters.date_from || '');
     const [dateTo, setDateTo] = useState(filters.date_to || '');
+
+    useEffect(() => {
+        const delay = setTimeout(() => {
+            if (search !== filters?.search || status !== (filters?.status || 'all') || dateFrom !== (filters?.date_from || '') || dateTo !== (filters?.date_to || '')) {
+                router.get('/owner/transactions', { 
+                    search, 
+                    status: status !== 'all' ? status : '', 
+                    date_from: dateFrom, 
+                    date_to: dateTo 
+                }, { preserveState: true, replace: true });
+            }
+        }, 300);
+        return () => clearTimeout(delay);
+    }, [search, status, dateFrom, dateTo]);
 
     const breadcrumbs = [
         { title: 'Dashboard', href: '/dashboard' },
@@ -140,6 +157,7 @@ export default function TransactionsIndex({ transactions, stats, filters }: any)
                         </Table>
                     </CardContent>
                 </Card>
+                <Pagination links={transactions?.links} />
             </div>
         </AppLayout>
     );

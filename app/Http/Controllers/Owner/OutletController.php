@@ -16,14 +16,28 @@ class OutletController extends Controller
      */
     public function index(Request $request)
     {
-        $user    = $request->user();
-        $tenants = $user->tenants()->with('subscriptionPackage')->latest()->get();
-
-        // Ambil limit dari paket aktif terbaru (ambil max_outlets tertinggi dari semua paket yang dimiliki)
-        $maxOutlets = $tenants
+        $user = $request->user();
+        
+        // Cek limit dari semua tenant tanpa paginasi
+        $allTenants = $user->tenants()->with('subscriptionPackage')->get();
+        $maxOutlets = $allTenants
             ->pluck('subscriptionPackage.max_outlets')
             ->filter()
             ->max() ?? 1; // default 1 jika tidak ada paket
+            
+        $totalOutlets = $allTenants->count();
+
+        $query = $user->tenants()->with('subscriptionPackage');
+
+        if ($request->has('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('business_name', 'like', "%{$search}%")
+                  ->orWhere('store_id', 'like', "%{$search}%");
+            });
+        }
+
+        $tenants = $query->latest()->paginate(10)->withQueryString();
 
         $packages = SubscriptionPackage::where('is_active', true)->orderBy('price')->get();
 
@@ -31,7 +45,8 @@ class OutletController extends Controller
             'tenants'    => $tenants,
             'maxOutlets' => $maxOutlets,
             'packages'   => $packages,
-            'canAdd'     => $tenants->count() < $maxOutlets,
+            'canAdd'     => $totalOutlets < $maxOutlets,
+            'filters'    => $request->only('search'),
         ]);
     }
 

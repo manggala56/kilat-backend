@@ -12,6 +12,10 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import * as rooms from '@/routes/owner/rooms';
 
+import { Pagination } from '@/components/Pagination';
+import { useEffect } from 'react';
+import { Search } from 'lucide-react';
+
 interface Room {
     id: number;
     name: string;
@@ -21,10 +25,20 @@ interface Room {
     total_sessions: number;
 }
 
-export default function RoomsIndex({ rooms: roomData }: { rooms: any }) {
+export default function RoomsIndex({ rooms: roomData, filters }: { rooms: any, filters?: any }) {
+    const [search, setSearch] = useState(filters?.search || '');
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [editingRoom, setEditingRoom] = useState<Room | null>(null);
+
+    useEffect(() => {
+        const delay = setTimeout(() => {
+            if (search !== filters?.search) {
+                router.get(rooms.index.url(), { search }, { preserveState: true, replace: true });
+            }
+        }, 300);
+        return () => clearTimeout(delay);
+    }, [search]);
 
     const [formData, setFormData] = useState({
         name: '',
@@ -108,14 +122,26 @@ export default function RoomsIndex({ rooms: roomData }: { rooms: any }) {
             <Head title="Manajemen Ruang PS/Rental" />
             
             <div className="flex h-full flex-1 flex-col gap-6 p-4 md:p-8 max-w-7xl mx-auto w-full">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
                         <h2 className="text-2xl font-bold tracking-tight text-[#FEB400]">Ruang / Station</h2>
                         <p className="text-muted-foreground text-sm">Kelola daftar ruang PS atau rental Anda.</p>
                     </div>
-                    <Button onClick={() => setIsAddModalOpen(true)} className="bg-[#FEB400] text-black hover:bg-[#e0a000]">
-                        <Plus className="mr-2 h-4 w-4" /> Tambah Ruang
-                    </Button>
+                    <div className="flex items-center gap-2">
+                        <div className="relative">
+                            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                            <Input
+                                type="search"
+                                placeholder="Cari nama ruang..."
+                                className="pl-8 w-full md:w-[250px]"
+                                value={search}
+                                onChange={e => setSearch(e.target.value)}
+                            />
+                        </div>
+                        <Button onClick={() => setIsAddModalOpen(true)} className="bg-[#FEB400] text-black hover:bg-[#e0a000]">
+                            <Plus className="mr-2 h-4 w-4" /> Tambah Ruang
+                        </Button>
+                    </div>
                 </div>
 
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -163,6 +189,7 @@ export default function RoomsIndex({ rooms: roomData }: { rooms: any }) {
                         </div>
                     )}
                 </div>
+                <Pagination links={roomData?.links} />
             </div>
 
             {/* Modal Tambah */}

@@ -4,11 +4,24 @@ import AppLayout from '@/layouts/app-layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Clock, CalendarDays, Receipt } from 'lucide-react';
+import { ArrowLeft, Clock, CalendarDays, Receipt, Search, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Pagination } from '@/components/Pagination';
+import { useState, useEffect } from 'react';
 import * as rooms from '@/routes/owner/rooms';
 
-export default function RoomSessions({ room, sessions }: { room: any, sessions: any }) {
+export default function RoomSessions({ room, sessions, filters }: { room: any, sessions: any, filters?: any }) {
+    const [search, setSearch] = useState(filters?.search || '');
+
+    useEffect(() => {
+        const delay = setTimeout(() => {
+            if (search !== filters?.search) {
+                router.get(rooms.sessions.url(room.id), { search }, { preserveState: true, replace: true });
+            }
+        }, 300);
+        return () => clearTimeout(delay);
+    }, [search]);
     const breadcrumbs = [
         { title: 'Dashboard', href: '/dashboard' },
         { title: 'Manajemen Ruang', href: rooms.index.url() },
@@ -50,6 +63,19 @@ export default function RoomSessions({ room, sessions }: { room: any, sessions: 
                     </div>
                 </div>
 
+                <div className="flex items-center gap-2 mb-2">
+                    <div className="relative">
+                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Input
+                            type="search"
+                            placeholder="Cari nama pelanggan..."
+                            className="pl-8 w-full md:w-[250px]"
+                            value={search}
+                            onChange={e => setSearch(e.target.value)}
+                        />
+                    </div>
+                </div>
+
                 <Card>
                     <CardHeader className="bg-muted/30">
                         <CardTitle className="text-lg flex items-center gap-2">
@@ -60,6 +86,7 @@ export default function RoomSessions({ room, sessions }: { room: any, sessions: 
                         <Table>
                             <TableHeader>
                                 <TableRow>
+                                    <TableHead>Pelanggan</TableHead>
                                     <TableHead><div className="flex items-center gap-1"><CalendarDays className="h-4 w-4"/> Mulai</div></TableHead>
                                     <TableHead><div className="flex items-center gap-1"><CalendarDays className="h-4 w-4"/> Selesai</div></TableHead>
                                     <TableHead>Durasi</TableHead>
@@ -70,7 +97,13 @@ export default function RoomSessions({ room, sessions }: { room: any, sessions: 
                             <TableBody>
                                 {sessions.data.map((session: any) => (
                                     <TableRow key={session.id}>
-                                        <TableCell className="font-medium">{formatDateTime(session.start_time)}</TableCell>
+                                        <TableCell>
+                                            <div className="flex items-center gap-2 font-medium">
+                                                <User className="w-4 h-4 text-muted-foreground" />
+                                                {session.customer_name || '-'}
+                                            </div>
+                                        </TableCell>
+                                        <TableCell>{formatDateTime(session.start_time)}</TableCell>
                                         <TableCell>{formatDateTime(session.end_time)}</TableCell>
                                         <TableCell>{calculateDuration(session.start_time, session.end_time)}</TableCell>
                                         <TableCell className="font-bold text-[#FEB400]">{formatRupiah(session.total_cost)}</TableCell>
@@ -85,7 +118,7 @@ export default function RoomSessions({ room, sessions }: { room: any, sessions: 
                                 ))}
                                 {sessions.data.length === 0 && (
                                     <TableRow>
-                                        <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
+                                        <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
                                             Belum ada riwayat sesi pemakaian.
                                         </TableCell>
                                     </TableRow>
@@ -94,6 +127,7 @@ export default function RoomSessions({ room, sessions }: { room: any, sessions: 
                         </Table>
                     </CardContent>
                 </Card>
+                <Pagination links={sessions?.links} />
             </div>
         </AppLayout>
     );

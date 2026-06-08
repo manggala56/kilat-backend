@@ -1,24 +1,35 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Head, router } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Edit, Trash2, ArrowRight } from 'lucide-react';
+import { Plus, Edit, Trash2, ArrowRight, Search } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
+import { Pagination } from '@/components/Pagination';
 
-export default function UnitConversionsIndex({ conversions }: { conversions: any[] }) {
+export default function UnitConversionsIndex({ conversions, filters }: { conversions: any, filters?: any }) {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
+    const [search, setSearch] = useState(filters?.search || '');
     const [formData, setFormData] = useState<any>({
         id: null,
         base_unit: '',
         target_unit: '',
         conversion_rate: ''
     });
+
+    useEffect(() => {
+        const delay = setTimeout(() => {
+            if (search !== filters?.search) {
+                router.get('/owner/unit-conversions', { search }, { preserveState: true, replace: true });
+            }
+        }, 300);
+        return () => clearTimeout(delay);
+    }, [search]);
 
     const openCreateModal = () => {
         setFormData({ id: null, base_unit: '', target_unit: '', conversion_rate: '' });
@@ -67,6 +78,11 @@ export default function UnitConversionsIndex({ conversions }: { conversions: any
         }
     };
 
+    const handleSearch = (e: React.FormEvent) => {
+        e.preventDefault();
+        router.get('/owner/unit-conversions', { search }, { preserveState: true });
+    };
+
     const breadcrumbs = [
         { title: 'Dashboard', href: '/dashboard' },
         { title: 'Konversi Satuan', href: '/owner/unit-conversions' },
@@ -76,14 +92,20 @@ export default function UnitConversionsIndex({ conversions }: { conversions: any
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Manajemen Konversi Satuan" />
             <div className="flex h-full flex-1 flex-col gap-6 p-4 md:p-8 max-w-5xl mx-auto w-full">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
                         <h1 className="text-2xl font-bold tracking-tight">Manajemen Konversi Satuan</h1>
                         <p className="text-muted-foreground mt-1">Atur nilai konversi dari satu satuan ke satuan lain (contoh: 1 lonjor = 100 cup).</p>
                     </div>
-                    <Button onClick={openCreateModal} className="bg-[#FEB400] text-black hover:bg-[#e0a000]">
-                        <Plus className="mr-2 h-4 w-4" /> Tambah Konversi
-                    </Button>
+                    <div className="flex items-center gap-2">
+                        <form onSubmit={handleSearch} className="flex relative">
+                            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                            <Input type="search" placeholder="Cari satuan..." className="pl-8 w-full md:w-[200px]" value={search} onChange={e => setSearch(e.target.value)} />
+                        </form>
+                        <Button onClick={openCreateModal} className="bg-[#FEB400] text-black hover:bg-[#e0a000] shrink-0">
+                            <Plus className="mr-2 h-4 w-4" /> Tambah Konversi
+                        </Button>
+                    </div>
                 </div>
 
                 <Card>
@@ -103,7 +125,7 @@ export default function UnitConversionsIndex({ conversions }: { conversions: any
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {conversions.length > 0 ? conversions.map((conversion) => (
+                                {conversions?.data?.length > 0 ? conversions.data.map((conversion: any) => (
                                     <TableRow key={conversion.id}>
                                         <TableCell className="font-medium text-blue-600">{conversion.base_unit}</TableCell>
                                         <TableCell className="text-center"><ArrowRight className="h-4 w-4 text-muted-foreground inline-block" /></TableCell>
@@ -132,6 +154,7 @@ export default function UnitConversionsIndex({ conversions }: { conversions: any
                         </Table>
                     </CardContent>
                 </Card>
+                <Pagination links={conversions?.links} />
 
                 <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
                     <DialogContent>

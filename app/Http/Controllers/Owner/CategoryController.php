@@ -14,12 +14,17 @@ class CategoryController extends Controller
         $tenant = $request->user()->tenant ?? abort(403);
 
         $categories = Category::where('tenant_id', $tenant->id)
+            ->when($request->search, function ($query, $search) {
+                $query->where('name', 'like', "%{$search}%");
+            })
             ->withCount('products')
             ->orderBy('name')
-            ->get();
+            ->paginate(10)
+            ->withQueryString();
 
         return Inertia::render('Owner/Categories/Index', [
             'categories' => $categories,
+            'filters' => $request->only('search'),
         ]);
     }
 

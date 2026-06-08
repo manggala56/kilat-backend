@@ -14,11 +14,16 @@ class ShiftController extends Controller
         $tenant = $request->user()->tenants()->first() ?? abort(403);
         
         $shifts = Shift::where('tenant_id', $tenant->id)
+            ->when($request->search, function($query, $search) {
+                $query->where('name', 'like', "%{$search}%");
+            })
             ->orderBy('start_time')
-            ->get();
+            ->paginate(10)
+            ->withQueryString();
 
         return Inertia::render('Owner/HR/Shifts', [
             'shifts' => $shifts,
+            'filters' => $request->only('search'),
         ]);
     }
 

@@ -12,6 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import * as rawMaterials from '@/routes/owner/raw-materials';
+import { useEffect } from 'react';
+import { Pagination } from '@/components/Pagination';
 
 interface RawMaterial {
     id: number;
@@ -27,6 +29,15 @@ export default function RawMaterialsIndex({ rawMaterials: rawData, unitConversio
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingItem, setEditingItem] = useState<RawMaterial | null>(null);
     const [search, setSearch] = useState(filters.search || '');
+
+    useEffect(() => {
+        const delay = setTimeout(() => {
+            if (search !== filters?.search) {
+                router.get(rawMaterials.index.url(), { search }, { preserveState: true, replace: true });
+            }
+        }, 300);
+        return () => clearTimeout(delay);
+    }, [search]);
 
     const [formData, setFormData] = useState({
         name: '',
@@ -156,6 +167,7 @@ export default function RawMaterialsIndex({ rawMaterials: rawData, unitConversio
                         </Table>
                     </CardContent>
                 </Card>
+                <Pagination links={rawData.links} />
             </div>
 
             <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>

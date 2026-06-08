@@ -11,6 +11,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Plus, Edit2, Trash2, Wallet, Search } from 'lucide-react';
 import { toast } from 'sonner';
 
+import { Pagination } from '@/components/Pagination';
+import { useEffect } from 'react';
+
 export default function ExpensesIndex({ expenses, filters }: any) {
     const [search, setSearch] = useState(filters.search || '');
     const [month, setMonth] = useState(filters.month || '');
@@ -18,6 +21,15 @@ export default function ExpensesIndex({ expenses, filters }: any) {
     const [isEdit, setIsEdit] = useState(false);
     const [currentId, setCurrentId] = useState<number | null>(null);
     const [form, setForm] = useState({ name: '', category: '', amount: '', expense_date: '', description: '' });
+
+    useEffect(() => {
+        const delay = setTimeout(() => {
+            if (search !== filters?.search || month !== (filters?.month || '')) {
+                router.get('/owner/expenses', { search, month }, { preserveState: true, replace: true });
+            }
+        }, 300);
+        return () => clearTimeout(delay);
+    }, [search, month]);
 
     const breadcrumbs = [
         { title: 'Dashboard', href: '/dashboard' },
@@ -190,6 +202,7 @@ export default function ExpensesIndex({ expenses, filters }: any) {
                         </Table>
                     </CardContent>
                 </Card>
+                <Pagination links={expenses?.links} />
             </div>
         </AppLayout>
     );
