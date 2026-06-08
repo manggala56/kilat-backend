@@ -34,6 +34,31 @@ class TenantForm
                                     ->preload()
                                     ->required()
                                     ->label('Pemilik (User)')
+                                    ->createOptionForm([
+                                        TextInput::make('name')
+                                            ->label('Nama Lengkap')
+                                            ->required()
+                                            ->maxLength(255),
+                                        TextInput::make('email')
+                                            ->label('Email')
+                                            ->email()
+                                            ->required()
+                                            ->maxLength(255),
+                                        TextInput::make('password')
+                                            ->label('Password')
+                                            ->password()
+                                            ->required()
+                                            ->maxLength(255),
+                                    ])
+                                    ->createOptionUsing(function (array $data) {
+                                        $user = \App\Models\User::create([
+                                            'name' => $data['name'],
+                                            'email' => $data['email'],
+                                            'password' => \Illuminate\Support\Facades\Hash::make($data['password']),
+                                            'role' => 'owner',
+                                        ]);
+                                        return $user->id;
+                                    })
                                     ->columnSpanFull(),
                                 Textarea::make('business_address')
                                     ->label('Alamat Bisnis')
