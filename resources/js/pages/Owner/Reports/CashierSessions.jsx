@@ -84,6 +84,6 @@ export default function CashierSessions({ sessions }) {
                     </CardContent>
                 </Card>
             </div>
-        </OwnerLayout>
+        </AppLayout>
     );
 }

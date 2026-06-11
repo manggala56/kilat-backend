@@ -125,6 +125,6 @@ export default function SessionDetail({ session, transactions }) {
                     </CardContent>
                 </Card>
             </div>
-        </OwnerLayout>
+        </AppLayout>
     );
 }
