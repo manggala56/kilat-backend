@@ -28,9 +28,14 @@ Route::middleware(['auth', 'verified', 'role:owner'])->group(function () {
         Route::get('/inventory', [\App\Http\Controllers\Owner\InventoryController::class, 'index'])->name('inventory.index');
         Route::post('/inventory/adjust', [\App\Http\Controllers\Owner\InventoryController::class, 'adjust'])->name('inventory.adjust');
 
-        // Transaction History
+        // --- Modul 3: Transactions ---
         Route::get('/transactions', [\App\Http\Controllers\Owner\TransactionController::class, 'index'])->name('transactions.index');
         Route::get('/transactions/{transaction}', [\App\Http\Controllers\Owner\TransactionController::class, 'show'])->name('transactions.show');
+
+        // --- Modul 4: Reports ---
+        Route::get('/reports', [\App\Http\Controllers\Owner\ReportController::class, 'index'])->name('reports.index');
+        Route::get('/reports/sessions', [\App\Http\Controllers\Owner\ReportController::class, 'sessions'])->name('reports.sessions');
+        Route::get('/reports/sessions/{id}', [\App\Http\Controllers\Owner\ReportController::class, 'sessionDetail'])->name('reports.sessions.detail');
 
         // --- Modul 4: Rooms (PS/Rental) ---
         Route::resource('rooms', \App\Http\Controllers\Owner\RoomController::class)->except(['create', 'show', 'edit']);

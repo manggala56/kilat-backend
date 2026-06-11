@@ -9,7 +9,7 @@ class TransactionItem extends Model
 {
     protected $fillable = [
         'transaction_id', 'product_id', 'product_variant_id',
-        'product_name', 'unit_price', 'quantity', 'subtotal',
+        'product_name', 'unit_price', 'quantity', 'subtotal', 'is_cancelled',
     ];
 
     protected $casts = [

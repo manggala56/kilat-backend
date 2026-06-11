@@ -24,6 +24,7 @@ class TransactionController extends Controller
             'total_amount'     => 'required|numeric|min:0',
             'payment_method'   => 'required|string|in:CASH,QRIS,DEBIT',
             'cashier_id'       => 'nullable|integer',
+            'cashier_session_id' => 'nullable|integer',
             'items'            => 'required|array|min:1',
             'items.*.product_id' => 'required|integer|exists:products,id',
             'items.*.quantity'   => 'required|integer|min:1',
@@ -37,6 +38,7 @@ class TransactionController extends Controller
                 'receipt_number' => $validated['invoice_number'],
                 'tenant_id'      => $tenant->id,
                 'cashier_id'     => $validated['cashier_id'] ?? null,
+                'cashier_session_id' => $validated['cashier_session_id'] ?? null,
                 'subtotal'       => $validated['total_amount'],
                 'total_amount'   => $validated['total_amount'],
                 'payment_method' => strtolower($validated['payment_method']),
@@ -123,6 +125,68 @@ class TransactionController extends Controller
     }
 
     /**
+     * POST /api/v1/transactions/{invoice}/cancel-item
+     * Cancel an item from a completed transaction.
+     */
+    public function cancelItem(Request $request, $invoice)
+    {
+        $tenant = app('tenant');
+
+        $validated = $request->validate([
+            'product_id' => 'required|integer|exists:products,id',
+        ]);
+
+        $transaction = Transaction::where('tenant_id', $tenant->id)
+            ->where('receipt_number', $invoice)
+            ->firstOrFail();
+
+        $item = TransactionItem::where('transaction_id', $transaction->id)
+            ->where('product_id', $validated['product_id'])
+            ->where('is_cancelled', false)
+            ->firstOrFail();
+
+        DB::beginTransaction();
+        try {
+            // Mark item as cancelled
+            $item->update(['is_cancelled' => true]);
+
+            // Deduct transaction totals
+            $transaction->subtotal -= $item->subtotal;
+            $transaction->total_amount -= $item->subtotal;
+            $transaction->save();
+
+            // Refund stock
+            $product = Product::with('recipeItems.rawMaterial')
+                ->where('id', $item->product_id)
+                ->where('tenant_id', $tenant->id)
+                ->first();
+
+            if ($product) {
+                if ($product->recipeItems->isNotEmpty()) {
+                    foreach ($product->recipeItems as $recipe) {
+                        if ($recipe->rawMaterial) {
+                            $refund = $recipe->quantity * $item->quantity;
+                            $recipe->rawMaterial->increment('stock', $refund);
+                        }
+                    }
+                } else {
+                    $product->increment('stock', $item->quantity);
+                }
+            }
+
+            DB::commit();
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            return response()->json(['message' => 'Server error occurred during cancellation.'], 500);
+        }
+
+        return response()->json([
+            'message' => 'Item cancelled successfully',
+            'new_total' => $transaction->total_amount
+        ]);
+    }
+
+    /**
      * GET /api/v1/transactions/{id}/items
      * Detail item-item dalam satu transaksi.
      */
@@ -142,6 +206,7 @@ class TransactionController extends Controller
                 'quantity'     => (int) $item->quantity,
                 'unit_price'   => (float) $item->unit_price,
                 'subtotal'     => (float) $item->subtotal,
+                'is_cancelled' => (bool) $item->is_cancelled,
             ]);
 
         return response()->json(['data' => $items]);

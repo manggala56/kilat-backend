@@ -17,6 +17,7 @@ class ProductController extends Controller
 
         $products = Product::with('category:id,name', 'variants')
             ->where('tenant_id', $tenant->id)
+            ->where('is_active', true)
             ->when($request->search, fn ($q) => $q->where('name', 'like', "%{$request->search}%")
                 ->orWhere('sku', 'like', "%{$request->search}%"))
             ->when($request->category_id && $request->category_id !== 'all', fn ($q) => $q->where('category_id', $request->category_id))

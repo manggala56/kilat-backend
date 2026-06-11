@@ -73,8 +73,12 @@ Route::prefix('v1')
                 // #13 GET  /v1/transactions         — History
                 // #14 GET  /v1/transactions/{id}/items — Detail items
                 Route::post('/transactions',              [\App\Http\Controllers\Api\V1\TransactionController::class, 'store']);
+                Route::post('/transactions/{invoice}/cancel-item', [\App\Http\Controllers\Api\V1\TransactionController::class, 'cancelItem']);
                 Route::get('/transactions',               [\App\Http\Controllers\Api\V1\TransactionController::class, 'index']);
                 Route::get('/transactions/{id}/items',    [\App\Http\Controllers\Api\V1\TransactionController::class, 'items']);
+
+                // Cashier Sessions
+                Route::post('/cashier-sessions',          [\App\Http\Controllers\Api\V1\CashierSessionController::class, 'store']);
 
                 // ── Rooms ──────────────────────────────────
                 // #15 GET  /v1/rooms

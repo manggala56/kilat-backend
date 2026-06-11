@@ -184,4 +184,44 @@ class ReportController extends Controller
             'weeklyRevenue' => $weeklyRevenue,
         ]);
     }
+
+    /**
+     * Halaman daftar Sesi Kasir
+     */
+    public function sessions(Request $request)
+    {
+        $tenant = $request->user()->tenants()->first() ?? abort(403);
+        
+        $sessions = \App\Models\CashierSession::with('cashier:id,name')
+            ->where('tenant_id', $tenant->id)
+            ->orderByDesc('clock_in_time')
+            ->paginate(20);
+
+        return Inertia::render('Owner/Reports/CashierSessions', [
+            'sessions' => $sessions
+        ]);
+    }
+
+    /**
+     * Halaman detail satu Sesi Kasir (Invoice List)
+     */
+    public function sessionDetail(Request $request, $id)
+    {
+        $tenant = $request->user()->tenants()->first() ?? abort(403);
+
+        $session = \App\Models\CashierSession::with('cashier:id,name')
+            ->where('tenant_id', $tenant->id)
+            ->findOrFail($id);
+
+        $transactions = Transaction::with('items.product')
+            ->where('tenant_id', $tenant->id)
+            ->where('cashier_session_id', $session->id)
+            ->orderByDesc('transacted_at')
+            ->get();
+
+        return Inertia::render('Owner/Reports/SessionDetail', [
+            'session' => $session,
+            'transactions' => $transactions
+        ]);
+    }
 }
