@@ -1,5 +1,5 @@
 import React from 'react';
-import AppLayout from '@/Layouts/AppLayout';
+import AppLayout from '@/layouts/app-layout';
 import { Head, router } from '@inertiajs/react';
 
 export default function CashDrawerLogs({ logs, filters }) {
