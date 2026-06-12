@@ -36,6 +36,7 @@ Route::middleware(['auth', 'verified', 'role:owner'])->group(function () {
         Route::get('/reports', [\App\Http\Controllers\Owner\ReportController::class, 'index'])->name('reports.index');
         Route::get('/reports/sessions', [\App\Http\Controllers\Owner\ReportController::class, 'sessions'])->name('reports.sessions');
         Route::get('/reports/sessions/{id}', [\App\Http\Controllers\Owner\ReportController::class, 'sessionDetail'])->name('reports.sessions.detail');
+        Route::get('/reports/cash-drawer-logs', [\App\Http\Controllers\Owner\ReportController::class, 'cashDrawerLogs'])->name('reports.cashDrawerLogs');
 
         // --- Modul 4: Rooms (PS/Rental) ---
         Route::resource('rooms', \App\Http\Controllers\Owner\RoomController::class)->except(['create', 'show', 'edit']);

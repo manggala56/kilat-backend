@@ -77,8 +77,9 @@ Route::prefix('v1')
                 Route::get('/transactions',               [\App\Http\Controllers\Api\V1\TransactionController::class, 'index']);
                 Route::get('/transactions/{id}/items',    [\App\Http\Controllers\Api\V1\TransactionController::class, 'items']);
 
-                // Cashier Sessions
+                // Cashier Sessions & Drawer Logs
                 Route::post('/cashier-sessions',          [\App\Http\Controllers\Api\V1\CashierSessionController::class, 'store']);
+                Route::post('/cash-drawer-logs',          [\App\Http\Controllers\Api\V1\CashDrawerLogController::class, 'store']);
 
                 // ── Rooms ──────────────────────────────────
                 // #15 GET  /v1/rooms

@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\Owner;
 
 use App\Http\Controllers\Controller;
+use App\Models\CashDrawerLog;
 use App\Models\Transaction;
 use App\Models\TransactionItem;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -222,6 +224,35 @@ class ReportController extends Controller
         return Inertia::render('Owner/Reports/SessionDetail', [
             'session' => $session,
             'transactions' => $transactions
+        ]);
+    }
+
+    public function cashDrawerLogs(Request $request)
+    {
+        $tenantId = auth()->user()->tenant_id;
+        
+        $query = CashDrawerLog::with('employee')
+            ->where('tenant_id', $tenantId)
+            ->orderBy('opened_at', 'desc');
+
+        if ($request->has('date') && $request->date != '') {
+            $query->whereDate('opened_at', $request->date);
+        } else {
+            $query->whereDate('opened_at', Carbon::today());
+        }
+
+        $logs = $query->paginate(20)->through(function ($log) {
+            return [
+                'id' => $log->id,
+                'employee_name' => $log->employee ? $log->employee->name : 'Unknown',
+                'reason' => $log->reason,
+                'opened_at' => $log->opened_at->format('Y-m-d H:i:s')
+            ];
+        });
+
+        return Inertia::render('Owner/Reports/CashDrawerLogs', [
+            'logs' => $logs,
+            'filters' => $request->only(['date'])
         ]);
     }
 }
