@@ -40,7 +40,7 @@ class AttendanceController extends Controller
         Attendance::create([
             'employee_id' => $user->id,
             'tenant_id' => $user->tenant_id,
-            'clock_in_time' => Carbon::parse($request->clock_in_time),
+            'clock_in_time' => Carbon::parse($request->clock_in_time)->setTimezone(config('app.timezone')),
             'starting_cash' => $request->starting_cash,
         ]);
 
@@ -80,7 +80,7 @@ class AttendanceController extends Controller
         }
 
         $activeAttendance->update([
-            'clock_out_time' => Carbon::parse($request->clock_out_time),
+            'clock_out_time' => Carbon::parse($request->clock_out_time)->setTimezone(config('app.timezone')),
             'system_recorded_cash' => $request->system_recorded_cash,
             'actual_cash_input' => $request->actual_cash_input,
             'discrepancy' => $request->discrepancy,
