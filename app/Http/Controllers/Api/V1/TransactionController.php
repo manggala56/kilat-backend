@@ -34,6 +34,12 @@ class TransactionController extends Controller
 
         DB::beginTransaction();
         try {
+            $existingTransaction = Transaction::where('receipt_number', $validated['invoice_number'])->first();
+            if ($existingTransaction) {
+                DB::rollBack();
+                return response()->json($existingTransaction, 200);
+            }
+
             $transaction = Transaction::create([
                 'receipt_number' => $validated['invoice_number'],
                 'tenant_id'      => $tenant->id,
