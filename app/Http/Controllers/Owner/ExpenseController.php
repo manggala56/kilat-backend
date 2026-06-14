@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Owner;
 use App\Http\Controllers\Controller;
 use App\Models\Expense;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 class ExpenseController extends Controller
@@ -26,8 +27,31 @@ class ExpenseController extends Controller
             ->paginate(20)
             ->withQueryString();
 
+        $currentMonth = $request->month ? date('m', strtotime($request->month)) : date('m');
+        $currentYear = $request->month ? date('Y', strtotime($request->month)) : date('Y');
+
+        $stats = [
+            'total_expenses' => Expense::where('tenant_id', $tenant->id)
+                ->whereMonth('expense_date', $currentMonth)
+                ->whereYear('expense_date', $currentYear)
+                ->sum('amount'),
+            'total_transactions' => Expense::where('tenant_id', $tenant->id)
+                ->whereMonth('expense_date', $currentMonth)
+                ->whereYear('expense_date', $currentYear)
+                ->count(),
+        ];
+
+        $chartData = Expense::where('tenant_id', $tenant->id)
+            ->whereMonth('expense_date', $currentMonth)
+            ->whereYear('expense_date', $currentYear)
+            ->select('category', DB::raw('SUM(amount) as total'))
+            ->groupBy('category')
+            ->get();
+
         return Inertia::render('Owner/Expenses/Index', [
             'expenses' => $expenses,
+            'stats' => $stats,
+            'chartData' => $chartData,
             'filters' => $request->only('search', 'month'),
         ]);
     }

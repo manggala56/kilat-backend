@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Owner;
 use App\Http\Controllers\Controller;
 use App\Models\Transaction;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 class TransactionController extends Controller
@@ -47,9 +48,30 @@ class TransactionController extends Controller
             'average_basket' => $statsQuery->avg('total_amount'),
         ];
 
+        // Chart Data: Daily Revenue
+        $chartData = Transaction::where('tenant_id', $tenant->id)
+            ->where('status', 'completed')
+            ->when($request->date_from, fn ($q) => $q->whereDate('transacted_at', '>=', $request->date_from))
+            ->when($request->date_to, fn ($q) => $q->whereDate('transacted_at', '<=', $request->date_to))
+            ->select(DB::raw('DATE(transacted_at) as date'), DB::raw('SUM(total_amount) as total'))
+            ->groupBy('date')
+            ->orderBy('date', 'asc')
+            ->get();
+
+        // Pie Chart Data: Payment Methods
+        $paymentMethodsData = Transaction::where('tenant_id', $tenant->id)
+            ->where('status', 'completed')
+            ->when($request->date_from, fn ($q) => $q->whereDate('transacted_at', '>=', $request->date_from))
+            ->when($request->date_to, fn ($q) => $q->whereDate('transacted_at', '<=', $request->date_to))
+            ->select('payment_method', DB::raw('count(*) as count'), DB::raw('SUM(total_amount) as total'))
+            ->groupBy('payment_method')
+            ->get();
+
         return Inertia::render('Owner/Transactions/Index', [
             'transactions' => $transactions,
             'stats' => $stats,
+            'chartData' => $chartData,
+            'paymentMethodsData' => $paymentMethodsData,
             'filters' => $request->only('search', 'status', 'payment_method', 'date_from', 'date_to'),
         ]);
     }

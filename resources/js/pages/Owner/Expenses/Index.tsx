@@ -8,13 +8,15 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Edit2, Trash2, Wallet, Search } from 'lucide-react';
+import { Search, Plus, Edit2, Trash2, Wallet, Printer } from 'lucide-react';
 import { toast } from 'sonner';
-
 import { Pagination } from '@/components/Pagination';
+import { PieChart, Pie, Cell, Tooltip as RechartsTooltip, ResponsiveContainer, Legend } from 'recharts';
 import { useEffect } from 'react';
 
-export default function ExpensesIndex({ expenses, filters }: any) {
+const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
+
+export default function ExpensesIndex({ expenses, stats, chartData, filters }: any) {
     const [search, setSearch] = useState(filters.search || '');
     const [month, setMonth] = useState(filters.month || '');
     const [isOpen, setIsOpen] = useState(false);
@@ -88,13 +90,16 @@ export default function ExpensesIndex({ expenses, filters }: any) {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Pengeluaran Operasional" />
-            <div className="flex h-full flex-1 flex-col gap-6 p-4 md:p-8 max-w-7xl mx-auto w-full">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex h-full flex-1 flex-col gap-6 p-4 md:p-8 max-w-7xl mx-auto w-full print:p-0">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 print:hidden">
                     <div>
                         <h2 className="text-2xl font-bold tracking-tight text-[#FEB400]">Pengeluaran (Expenses)</h2>
                         <p className="text-muted-foreground text-sm">Catat biaya operasional seperti listrik, sewa, gaji, dll.</p>
                     </div>
                     <div className="flex flex-col sm:flex-row items-center gap-3">
+                        <Button onClick={() => window.print()} variant="outline" className="flex items-center gap-2 w-full sm:w-auto">
+                            <Printer className="h-4 w-4" /> Cetak
+                        </Button>
                         <form onSubmit={handleSearch} className="flex gap-2 w-full sm:w-auto">
                             <Input type="month" value={month} onChange={e => setMonth(e.target.value)} />
                             <div className="relative">
@@ -109,7 +114,7 @@ export default function ExpensesIndex({ expenses, filters }: any) {
                                     <Plus className="mr-2 h-4 w-4" /> Tambah Pengeluaran
                                 </Button>
                             </DialogTrigger>
-                            <DialogContent>
+                            <DialogContent className="print:hidden">
                                 <DialogHeader>
                                     <DialogTitle>{isEdit ? 'Edit Pengeluaran' : 'Catat Pengeluaran Baru'}</DialogTitle>
                                 </DialogHeader>
@@ -154,6 +159,45 @@ export default function ExpensesIndex({ expenses, filters }: any) {
                     </div>
                 </div>
 
+                <div className="hidden print:block mb-4">
+                    <h2 className="text-2xl font-bold">Laporan Pengeluaran</h2>
+                    <p>Periode: {month || 'Bulan Ini'}</p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 print:hidden">
+                    <Card>
+                        <CardHeader className="pb-2">
+                            <CardTitle className="text-sm font-medium">Total Pengeluaran ({month || 'Bulan Ini'})</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold text-red-600">{formatRupiah(stats.total_expenses || 0)}</div>
+                            <p className="text-xs text-muted-foreground mt-1">Dari {stats.total_transactions} transaksi</p>
+                        </CardContent>
+                    </Card>
+                    <Card className="md:col-span-1 lg:col-span-2">
+                        <CardHeader className="pb-2">
+                            <CardTitle className="text-sm font-medium">Distribusi Pengeluaran</CardTitle>
+                        </CardHeader>
+                        <CardContent className="h-[150px]">
+                            {chartData && chartData.length > 0 ? (
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <PieChart>
+                                        <Pie data={chartData} dataKey="total" nameKey="category" cx="50%" cy="50%" innerRadius={40} outerRadius={60} paddingAngle={5}>
+                                            {chartData.map((entry: any, index: number) => (
+                                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                            ))}
+                                        </Pie>
+                                        <RechartsTooltip formatter={(value: number) => formatRupiah(value)} />
+                                        <Legend layout="vertical" verticalAlign="middle" align="right" />
+                                    </PieChart>
+                                </ResponsiveContainer>
+                            ) : (
+                                <div className="flex items-center justify-center h-full text-muted-foreground">Belum ada pengeluaran</div>
+                            )}
+                        </CardContent>
+                    </Card>
+                </div>
+
                 <Card className="mt-2">
                     <CardHeader className="bg-muted/30 pb-4">
                         <CardTitle className="text-lg flex items-center gap-2">
@@ -181,7 +225,7 @@ export default function ExpensesIndex({ expenses, filters }: any) {
                                         </TableCell>
                                         <TableCell className="capitalize">{expense.category}</TableCell>
                                         <TableCell className="text-right font-semibold">{formatRupiah(expense.amount)}</TableCell>
-                                        <TableCell className="text-right">
+                                        <TableCell className="text-right print:hidden">
                                             <div className="flex justify-end gap-2">
                                                 <Button variant="outline" size="sm" onClick={() => handleEdit(expense)}>
                                                     <Edit2 className="h-4 w-4" />
@@ -202,7 +246,9 @@ export default function ExpensesIndex({ expenses, filters }: any) {
                         </Table>
                     </CardContent>
                 </Card>
-                <Pagination links={expenses?.links} />
+                <div className="print:hidden">
+                    <Pagination links={expenses?.links} />
+                </div>
             </div>
         </AppLayout>
     );

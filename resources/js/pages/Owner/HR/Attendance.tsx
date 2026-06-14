@@ -5,23 +5,24 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Users, Search, Clock, CalendarDays } from 'lucide-react';
+import { Users, Search, Clock, CalendarDays, Printer, UserCheck, UserX } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
 import { Pagination } from '@/components/Pagination';
 import { useEffect } from 'react';
 
-export default function AttendanceIndex({ attendances, filters }: any) {
+export default function AttendanceIndex({ attendances, stats, filters }: any) {
     const [search, setSearch] = useState(filters.search || '');
+    const [month, setMonth] = useState(filters.month || '');
 
     useEffect(() => {
         const delay = setTimeout(() => {
-            if (search !== filters?.search) {
-                router.get('/owner/attendances', { search }, { preserveState: true, replace: true });
+            if (search !== (filters?.search || '') || month !== (filters?.month || '')) {
+                router.get('/owner/attendances', { search, month }, { preserveState: true, replace: true });
             }
         }, 300);
         return () => clearTimeout(delay);
-    }, [search]);
+    }, [search, month]);
 
     const breadcrumbs = [
         { title: 'Dashboard', href: '/dashboard' },
@@ -44,24 +45,58 @@ export default function AttendanceIndex({ attendances, filters }: any) {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Absensi Karyawan" />
-            <div className="flex h-full flex-1 flex-col gap-6 p-4 md:p-8 max-w-7xl mx-auto w-full">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex h-full flex-1 flex-col gap-6 p-4 md:p-8 max-w-7xl mx-auto w-full print:p-0">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 print:hidden">
                     <div>
-                        <h2 className="text-2xl font-bold tracking-tight text-[#FEB400]">Rekap Absensi</h2>
+                        <h2 className="text-2xl font-bold tracking-tight text-[#FEB400]">Laporan Absensi</h2>
                         <p className="text-muted-foreground text-sm">Lihat riwayat kehadiran (clock-in & clock-out) karyawan.</p>
                     </div>
                     
-                    <form onSubmit={handleSearch} className="flex relative">
-                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                        <Input
-                            type="search"
-                            placeholder="Cari nama karyawan..."
-                            className="pl-8 w-full md:w-[250px]"
-                            value={search}
-                            onChange={e => setSearch(e.target.value)}
-                        />
-                        <Button type="submit" variant="secondary" className="ml-2">Cari</Button>
-                    </form>
+                    <div className="flex flex-col sm:flex-row gap-3">
+                        <Button onClick={() => window.print()} variant="outline" className="flex items-center gap-2">
+                            <Printer className="h-4 w-4" /> Cetak
+                        </Button>
+                        <form onSubmit={handleSearch} className="flex gap-2">
+                            <Input type="month" value={month} onChange={e => setMonth(e.target.value)} />
+                            <div className="relative">
+                                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                                <Input
+                                    type="search"
+                                    placeholder="Cari karyawan..."
+                                    className="pl-8 w-full"
+                                    value={search}
+                                    onChange={e => setSearch(e.target.value)}
+                                />
+                            </div>
+                            <Button type="submit" variant="secondary">Cari</Button>
+                        </form>
+                    </div>
+                </div>
+
+                <div className="hidden print:block mb-4">
+                    <h2 className="text-2xl font-bold">Laporan Absensi Karyawan</h2>
+                    <p>Periode: {month || 'Bulan Ini'}</p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 print:hidden">
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Hadir & Tepat Waktu</CardTitle>
+                            <UserCheck className="h-4 w-4 text-emerald-500" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold text-emerald-600">{stats?.total_present || 0}</div>
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Terlambat</CardTitle>
+                            <UserX className="h-4 w-4 text-red-500" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold text-red-600">{stats?.total_late || 0}</div>
+                        </CardContent>
+                    </Card>
                 </div>
 
                 <Card className="mt-2">
@@ -129,7 +164,9 @@ export default function AttendanceIndex({ attendances, filters }: any) {
                         </Table>
                     </CardContent>
                 </Card>
-                <Pagination links={attendances?.links} />
+                <div className="print:hidden">
+                    <Pagination links={attendances?.links} />
+                </div>
             </div>
         </AppLayout>
     );

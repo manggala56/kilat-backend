@@ -196,11 +196,32 @@ class ReportController extends Controller
         
         $sessions = \App\Models\CashierSession::with('cashier:id,name')
             ->where('tenant_id', $tenant->id)
+            ->when($request->month, function ($q, $month) {
+                $q->whereMonth('clock_in_time', date('m', strtotime($month)))
+                  ->whereYear('clock_in_time', date('Y', strtotime($month)));
+            })
             ->orderByDesc('clock_in_time')
-            ->paginate(20);
+            ->paginate(20)
+            ->withQueryString();
+
+        $currentMonth = $request->month ? date('m', strtotime($request->month)) : date('m');
+        $currentYear = $request->month ? date('Y', strtotime($request->month)) : date('Y');
+
+        $stats = [
+            'total_sessions' => \App\Models\CashierSession::where('tenant_id', $tenant->id)
+                ->whereMonth('clock_in_time', $currentMonth)
+                ->whereYear('clock_in_time', $currentYear)
+                ->count(),
+            'total_discrepancy' => \App\Models\CashierSession::where('tenant_id', $tenant->id)
+                ->whereMonth('clock_in_time', $currentMonth)
+                ->whereYear('clock_in_time', $currentYear)
+                ->sum(DB::raw('COALESCE(actual_ending_cash, 0) - COALESCE(system_ending_cash, 0)')),
+        ];
 
         return Inertia::render('Owner/Reports/CashierSessions', [
-            'sessions' => $sessions
+            'sessions' => $sessions,
+            'stats' => $stats,
+            'filters' => $request->only('month'),
         ]);
     }
 
