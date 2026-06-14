@@ -90,7 +90,7 @@ class PosController extends Controller
             $transaction = Transaction::create([
                 'receipt_number' => 'RCP-' . strtoupper(Str::random(10)),
                 'tenant_id' => $tenant->id,
-                'cashier_id' => $request->user()?->id,
+                'cashier_id' => $request->cashier_id ?? null,
                 'subtotal' => $subtotal,
                 'discount_amount' => $discountAmount,
                 'tax_amount' => 0,
@@ -186,7 +186,7 @@ class PosController extends Controller
                     $transaction = Transaction::create([
                         'receipt_number' => 'RCP-OFFL-' . strtoupper(Str::random(8)),
                         'tenant_id' => $tenant->id,
-                        'cashier_id' => $request->user()?->id,
+                        'cashier_id' => $txData['cashier_id'] ?? null,
                         'subtotal' => $subtotal,
                         'discount_amount' => $discountAmount,
                         'tax_amount' => 0,

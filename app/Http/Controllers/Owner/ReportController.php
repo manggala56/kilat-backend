@@ -215,7 +215,7 @@ class ReportController extends Controller
             'total_discrepancy' => \App\Models\CashierSession::where('tenant_id', $tenant->id)
                 ->whereMonth('clock_in_time', $currentMonth)
                 ->whereYear('clock_in_time', $currentYear)
-                ->sum(DB::raw('COALESCE(actual_ending_cash, 0) - COALESCE(system_ending_cash, 0)')),
+                ->sum('discrepancy'),
         ];
 
         return Inertia::render('Owner/Reports/CashierSessions', [
