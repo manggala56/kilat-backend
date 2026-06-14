@@ -36,11 +36,6 @@ const mainNavItems: NavItem[] = [
         icon: LayoutDashboard,
     },
     {
-        title: 'Laporan Penjualan',
-        href: reports.index.url(),
-        icon: ShoppingCart,
-    },
-    {
         title: 'Katalog Produk',
         href: '/owner/products',
         icon: Package,
@@ -65,15 +60,9 @@ const mainNavItems: NavItem[] = [
         href: recipes.index.url(),
         icon: Beaker,
     },
-
     {
         title: 'Karyawan',
         href: employees.index.url(),
-        icon: Users,
-    },
-    {
-        title: 'Absensi & Shift',
-        href: '/owner/attendances', // I will just use string routes for simplicity
         icon: Users,
     },
     {
@@ -82,9 +71,31 @@ const mainNavItems: NavItem[] = [
         icon: Users,
     },
     {
-        title: 'Pengeluaran',
-        href: '/owner/expenses',
-        icon: Store,
+        title: 'Laporan',
+        href: '#', // Placeholder for parent
+        icon: ShoppingCart,
+        items: [
+            {
+                title: 'Laporan Absen',
+                href: '/owner/attendances',
+            },
+            {
+                title: 'Laporan Penjualan',
+                href: reports.index.url(),
+            },
+            {
+                title: 'History Transaksi',
+                href: '/owner/transactions',
+            },
+            {
+                title: 'Laporan Pengeluaran',
+                href: '/owner/expenses',
+            },
+            {
+                title: 'Rekap Kasir (Sesi)',
+                href: '/owner/reports/sessions',
+            },
+        ],
     },
     {
         title: 'Manajemen Outlet',
