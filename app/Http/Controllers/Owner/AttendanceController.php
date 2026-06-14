@@ -35,12 +35,12 @@ class AttendanceController extends Controller
             'total_present' => Attendance::where('tenant_id', $tenant->id)
                 ->whereMonth('created_at', $currentMonth)
                 ->whereYear('created_at', $currentYear)
-                ->where('status', 'present')
                 ->count(),
-            'total_late' => Attendance::where('tenant_id', $tenant->id)
-                ->whereMonth('created_at', $currentMonth)
-                ->whereYear('created_at', $currentYear)
-                ->where('status', 'late')
+            'total_late' => Attendance::where('attendances.tenant_id', $tenant->id)
+                ->join('shifts', 'attendances.shift_id', '=', 'shifts.id')
+                ->whereMonth('attendances.created_at', $currentMonth)
+                ->whereYear('attendances.created_at', $currentYear)
+                ->whereRaw('TIME(attendances.clock_in_time) > shifts.start_time')
                 ->count(),
         ];
 
