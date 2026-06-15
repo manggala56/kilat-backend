@@ -187,7 +187,7 @@ export default function ExpensesIndex({ expenses, stats, chartData, filters }: a
                                                 <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                             ))}
                                         </Pie>
-                                        <RechartsTooltip formatter={(value: number) => formatRupiah(value)} />
+                                        <RechartsTooltip formatter={(value: any) => formatRupiah(Number(value))} />
                                         <Legend layout="vertical" verticalAlign="middle" align="right" />
                                     </PieChart>
                                 </ResponsiveContainer>

@@ -123,7 +123,7 @@ export default function TransactionsIndex({ transactions, stats, chartData, paym
                                         <CartesianGrid strokeDasharray="3 3" />
                                         <XAxis dataKey="date" tick={{ fontSize: 12 }} />
                                         <YAxis tick={{ fontSize: 12 }} width={80} tickFormatter={(val) => `Rp${(val/1000)}k`} />
-                                        <RechartsTooltip formatter={(value: number) => formatRupiah(value)} />
+                                        <RechartsTooltip formatter={(value: any) => formatRupiah(Number(value))} />
                                         <Line type="monotone" dataKey="total" stroke="#FEB400" strokeWidth={2} name="Pendapatan" />
                                     </LineChart>
                                 </ResponsiveContainer>
@@ -140,12 +140,12 @@ export default function TransactionsIndex({ transactions, stats, chartData, paym
                             {paymentMethodsData && paymentMethodsData.length > 0 ? (
                                 <ResponsiveContainer width="100%" height="100%">
                                     <PieChart>
-                                        <Pie data={paymentMethodsData} dataKey="total" nameKey="payment_method" cx="50%" cy="50%" outerRadius={80} label={(entry) => entry.payment_method}>
+                                        <Pie data={paymentMethodsData} dataKey="total" nameKey="payment_method" cx="50%" cy="50%" outerRadius={80} label={(entry: any) => entry.payment_method}>
                                             {paymentMethodsData.map((entry: any, index: number) => (
                                                 <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                             ))}
                                         </Pie>
-                                        <RechartsTooltip formatter={(value: number) => formatRupiah(value)} />
+                                        <RechartsTooltip formatter={(value: any) => formatRupiah(Number(value))} />
                                     </PieChart>
                                 </ResponsiveContainer>
                             ) : (
