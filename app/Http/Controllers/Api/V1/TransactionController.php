@@ -30,6 +30,9 @@ class TransactionController extends Controller
             'items.*.quantity'   => 'required|integer|min:1',
             'items.*.unit_price' => 'required|numeric|min:0',
             'items.*.subtotal'   => 'required|numeric|min:0',
+            'items.*.notes'      => 'nullable|string',
+            'customer_name'      => 'nullable|string',
+            'table_number'       => 'nullable|string',
         ]);
 
         DB::beginTransaction();
@@ -49,6 +52,8 @@ class TransactionController extends Controller
                 'total_amount'   => $validated['total_amount'],
                 'payment_method' => strtolower($validated['payment_method']),
                 'status'         => 'completed',
+                'customer_name'  => $validated['customer_name'] ?? null,
+                'table_number'   => $validated['table_number'] ?? null,
                 'transacted_at'  => now(),
             ]);
 
@@ -70,6 +75,7 @@ class TransactionController extends Controller
                     'quantity'       => $item['quantity'],
                     'unit_price'     => $item['unit_price'],
                     'subtotal'       => $item['subtotal'],
+                    'notes'          => $item['notes'] ?? null,
                 ]);
 
                 if ($product->recipeItems->isNotEmpty()) {
