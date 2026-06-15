@@ -5,9 +5,9 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Support\Facades\RateLimiter;
 
-// Strict Rate Limiting: 60 requests per minute per IP
+// Loose Rate Limiting: 1000 requests per minute per IP for POS Sync
 RateLimiter::for('api', function (Request $request) {
-    return Limit::perMinute(60)->by($request->ip());
+    return Limit::perMinute(1000)->by($request->ip());
 });
 
 // ─────────────────────────────────────────────────────────────
