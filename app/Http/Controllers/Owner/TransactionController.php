@@ -16,6 +16,7 @@ class TransactionController extends Controller
     public function index(Request $request)
     {
         $tenant = $request->user()->tenant ?? abort(403);
+        $employees = \App\Models\Employee::where('tenant_id', $tenant->id)->get(['id', 'name']);
 
         $transactions = Transaction::with([
                 'cashier:id,name',
@@ -32,6 +33,8 @@ class TransactionController extends Controller
                 $q->whereDate('transacted_at', '>=', $request->date_from))
             ->when($request->date_to, fn ($q) =>
                 $q->whereDate('transacted_at', '<=', $request->date_to))
+            ->when($request->cashier_id, fn ($q) =>
+                $q->where('cashier_id', $request->cashier_id))
             ->orderByDesc('transacted_at')
             ->paginate(25)
             ->withQueryString();
@@ -40,6 +43,7 @@ class TransactionController extends Controller
         $statsQuery = Transaction::where('tenant_id', $tenant->id)
             ->when($request->date_from, fn ($q) => $q->whereDate('transacted_at', '>=', $request->date_from))
             ->when($request->date_to, fn ($q) => $q->whereDate('transacted_at', '<=', $request->date_to))
+            ->when($request->cashier_id, fn ($q) => $q->where('cashier_id', $request->cashier_id))
             ->where('status', 'completed');
 
         $stats = [
@@ -72,7 +76,8 @@ class TransactionController extends Controller
             'stats' => $stats,
             'chartData' => $chartData,
             'paymentMethodsData' => $paymentMethodsData,
-            'filters' => $request->only('search', 'status', 'payment_method', 'date_from', 'date_to'),
+            'filters' => $request->only('search', 'status', 'payment_method', 'date_from', 'date_to', 'cashier_id'),
+            'employees' => $employees,
         ]);
     }
 

@@ -16,9 +16,10 @@ import { useEffect } from 'react';
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
 
-export default function TransactionsIndex({ transactions, stats, chartData, paymentMethodsData, filters }: any) {
+export default function TransactionsIndex({ transactions, stats, chartData, paymentMethodsData, filters, employees }: any) {
     const [search, setSearch] = useState(filters.search || '');
     const [status, setStatus] = useState(filters.status || 'all');
+    const [cashierId, setCashierId] = useState(filters.cashier_id || 'all');
     const [dateFrom, setDateFrom] = useState(filters.date_from || '');
     const [dateTo, setDateTo] = useState(filters.date_to || '');
     
@@ -28,17 +29,18 @@ export default function TransactionsIndex({ transactions, stats, chartData, paym
 
     useEffect(() => {
         const delay = setTimeout(() => {
-            if (search !== filters?.search || status !== (filters?.status || 'all') || dateFrom !== (filters?.date_from || '') || dateTo !== (filters?.date_to || '')) {
+            if (search !== filters?.search || status !== (filters?.status || 'all') || cashierId !== (filters?.cashier_id || 'all') || dateFrom !== (filters?.date_from || '') || dateTo !== (filters?.date_to || '')) {
                 router.get('/owner/transactions', { 
                     search, 
                     status: status !== 'all' ? status : '', 
+                    cashier_id: cashierId !== 'all' ? cashierId : '',
                     date_from: dateFrom, 
                     date_to: dateTo 
                 }, { preserveState: true, replace: true });
             }
         }, 300);
         return () => clearTimeout(delay);
-    }, [search, status, dateFrom, dateTo]);
+    }, [search, status, cashierId, dateFrom, dateTo]);
 
     const breadcrumbs = [
         { title: 'Dashboard', href: '/dashboard' },
@@ -50,6 +52,7 @@ export default function TransactionsIndex({ transactions, stats, chartData, paym
         router.get('/owner/transactions', { 
             search, 
             status: status !== 'all' ? status : '', 
+            cashier_id: cashierId !== 'all' ? cashierId : '',
             date_from: dateFrom, 
             date_to: dateTo 
         }, { preserveState: true });
@@ -168,6 +171,17 @@ export default function TransactionsIndex({ transactions, stats, chartData, paym
                                     <SelectItem value="completed">Selesai</SelectItem>
                                     <SelectItem value="pending">Tertunda</SelectItem>
                                     <SelectItem value="cancelled">Dibatalkan</SelectItem>
+                                </SelectContent>
+                            </Select>
+                            <Select value={cashierId} onValueChange={setCashierId}>
+                                <SelectTrigger className="w-[160px]">
+                                    <SelectValue placeholder="Kasir" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">Semua Kasir</SelectItem>
+                                    {employees?.map((emp: any) => (
+                                        <SelectItem key={emp.id} value={emp.id.toString()}>{emp.name}</SelectItem>
+                                    ))}
                                 </SelectContent>
                             </Select>
                             <Input type="date" className="w-auto" value={dateFrom} onChange={e => setDateFrom(e.target.value)} title="Tanggal Mulai" />

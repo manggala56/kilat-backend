@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { BadgeDollarSign, ReceiptText, TrendingUp, Package, Calendar as CalendarIcon, Wallet, FileText, ArrowDownRight, ArrowUpRight } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -13,8 +14,9 @@ import * as reports from '@/routes/owner/reports';
 
 type TabType = 'PL' | 'CASH_FLOW' | 'BALANCE_SHEET' | 'CATEGORIES';
 
-export default function ReportsIndex({ date, dailyStats, cashFlow, balanceSheet, categoryBreakdown, topProducts, weeklyRevenue }: any) {
+export default function ReportsIndex({ date, cashier_id, employees, dailyStats, cashFlow, balanceSheet, categoryBreakdown, topProducts, weeklyRevenue }: any) {
     const [selectedDate, setSelectedDate] = useState(date);
+    const [selectedCashier, setSelectedCashier] = useState(cashier_id || 'all');
     const [activeTab, setActiveTab] = useState<TabType>('PL');
 
     const breadcrumbs = [
@@ -24,7 +26,10 @@ export default function ReportsIndex({ date, dailyStats, cashFlow, balanceSheet,
 
     const handleFilter = (e: React.FormEvent) => {
         e.preventDefault();
-        router.get(reports.index.url(), { date: selectedDate }, { preserveState: true });
+        router.get(reports.index.url(), { 
+            date: selectedDate,
+            cashier_id: selectedCashier !== 'all' ? selectedCashier : '' 
+        }, { preserveState: true });
     };
 
     const formatRupiah = (amount: number) =>
@@ -68,6 +73,20 @@ export default function ReportsIndex({ date, dailyStats, cashFlow, balanceSheet,
                         <p className="text-muted-foreground text-sm">Laporan keuangan profesional POS Kilatz mencakup Laba Rugi, Arus Kas, dan Neraca.</p>
                     </div>
                     <form onSubmit={handleFilter} className="flex items-end gap-2 bg-muted/30 p-2 rounded-lg border">
+                        <div className="grid gap-1.5">
+                            <Label htmlFor="date" className="text-xs text-muted-foreground ml-1">Pilih Kasir</Label>
+                            <Select value={selectedCashier} onValueChange={setSelectedCashier}>
+                                <SelectTrigger className="w-[160px] h-9">
+                                    <SelectValue placeholder="Semua Kasir" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">Semua Kasir</SelectItem>
+                                    {employees?.map((emp: any) => (
+                                        <SelectItem key={emp.id} value={emp.id.toString()}>{emp.name}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
                         <div className="grid gap-1.5">
                             <Label htmlFor="date" className="text-xs text-muted-foreground ml-1">Pilih Tanggal</Label>
                             <div className="relative">

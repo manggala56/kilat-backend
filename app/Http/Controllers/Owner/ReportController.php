@@ -20,11 +20,14 @@ class ReportController extends Controller
     {
         $tenant = $request->user()->tenants()->first() ?? abort(403);
         $date   = $request->query('date', now()->toDateString());
+        $cashierId = $request->query('cashier_id');
+        $employees = \App\Models\Employee::where('tenant_id', $tenant->id)->get(['id', 'name']);
 
         // Statistik harian
         $dailyStats = Transaction::where('tenant_id', $tenant->id)
             ->where('status', 'completed')
             ->whereDate('transacted_at', $date)
+            ->when($cashierId, fn($q) => $q->where('cashier_id', $cashierId))
             ->selectRaw('SUM(total_amount) as total_sales, COUNT(*) as transaction_count')
             ->first();
 
@@ -36,6 +39,7 @@ class ReportController extends Controller
             ->where('t.tenant_id', $tenant->id)
             ->where('t.status', 'completed')
             ->whereDate('t.transacted_at', $date)
+            ->when($cashierId, fn($q) => $q->where('t.cashier_id', $cashierId))
             ->where('c.type', 'ROOM')
             ->sum('ti.subtotal');
 
@@ -48,6 +52,7 @@ class ReportController extends Controller
             ->where('t.tenant_id', $tenant->id)
             ->where('t.status', 'completed')
             ->whereDate('t.transacted_at', $date)
+            ->when($cashierId, fn($q) => $q->where('t.cashier_id', $cashierId))
             ->sum(DB::raw('ti.quantity * ti.hpp_snapshot')); 
 
         $grossProfit = $totalSalesVal - $totalCogs;
@@ -71,6 +76,7 @@ class ReportController extends Controller
             ->where('tenant_id', $tenant->id)
             ->where('status', 'completed')
             ->whereDate('transacted_at', $date)
+            ->when($cashierId, fn($q) => $q->where('cashier_id', $cashierId))
             ->selectRaw('payment_method, SUM(total_amount) as total')
             ->groupBy('payment_method')
             ->get()
@@ -118,6 +124,7 @@ class ReportController extends Controller
             ->where('t.tenant_id', $tenant->id)
             ->where('t.status', 'completed')
             ->whereDate('t.transacted_at', $date)
+            ->when($cashierId, fn($q) => $q->where('t.cashier_id', $cashierId))
             ->select(
                 DB::raw('COALESCE(c.name, "Uncategorized") as category_name'),
                 DB::raw('COALESCE(c.type, "OTHER") as category_type'),
@@ -134,6 +141,7 @@ class ReportController extends Controller
             ->where('t.tenant_id', $tenant->id)
             ->where('t.status', 'completed')
             ->whereDate('t.transacted_at', $date)
+            ->when($cashierId, fn($q) => $q->where('t.cashier_id', $cashierId))
             ->select(
                 'p.name',
                 DB::raw('SUM(ti.quantity) as quantity'),
@@ -149,6 +157,7 @@ class ReportController extends Controller
             ->where('tenant_id', $tenant->id)
             ->where('status', 'completed')
             ->where('transacted_at', '>=', now()->subDays(6)->startOfDay())
+            ->when($cashierId, fn($q) => $q->where('cashier_id', $cashierId))
             ->selectRaw("DATE(transacted_at) as date, SUM(total_amount) as revenue")
             ->groupBy('date')
             ->orderBy('date')
@@ -156,6 +165,8 @@ class ReportController extends Controller
 
         return Inertia::render('Owner/Reports/Index', [
             'date'          => $date,
+            'cashier_id'    => $cashierId,
+            'employees'     => $employees,
             'dailyStats'    => [
                 'total_sales'       => $totalSalesVal,
                 'room_sales'        => (float) $roomSales,
