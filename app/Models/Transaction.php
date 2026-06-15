@@ -13,6 +13,7 @@ class Transaction extends Model
         'subtotal', 'discount_amount', 'tax_amount', 'total_amount',
         'amount_paid', 'change_amount', 'payment_method',
         'status', 'notes', 'is_offline_sync', 'transacted_at',
+        'customer_name', 'table_number',
     ];
 
     protected $casts = [
