@@ -18,7 +18,11 @@ class TransactionController extends Controller
     public function store(Request $request)
     {
         \Log::info("Incoming Transaction Payload: " . json_encode($request->all()));
+        \Log::info("Auth User: " . json_encode($request->user() ? ['id' => $request->user()->id, 'role' => $request->user()->role ?? 'N/A', 'tenant_id' => $request->user()->tenant_id ?? 'N/A'] : 'NO USER'));
+        \Log::info("X-Tenant-ID header: " . ($request->header('X-Tenant-ID') ?? 'MISSING'));
+        
         $tenant = app('tenant');
+        \Log::info("Resolved Tenant: " . ($tenant ? "ID={$tenant->id}, Name={$tenant->business_name}" : 'NULL'));
 
         $validated = $request->validate([
             'invoice_number'   => 'required|string|unique:transactions,receipt_number',
