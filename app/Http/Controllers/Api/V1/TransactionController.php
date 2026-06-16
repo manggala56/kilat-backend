@@ -17,6 +17,7 @@ class TransactionController extends Controller
      */
     public function store(Request $request)
     {
+        \Log::info("Incoming Transaction Payload: " . json_encode($request->all()));
         $tenant = app('tenant');
 
         $validated = $request->validate([
