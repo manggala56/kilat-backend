@@ -101,7 +101,7 @@ class TransactionController extends Controller
         } catch (\Throwable $e) {
             DB::rollBack();
             \Illuminate\Support\Facades\Log::error('Transaction Error: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
-            return response()->json(['message' => 'Server error occurred.'], 500);
+            return response()->json(['message' => 'Server error occurred.', 'debug' => $e->getMessage()], 500);
         }
 
         return response()->json([
