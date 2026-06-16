@@ -25,7 +25,7 @@ class TransactionController extends Controller
         \Log::info("Resolved Tenant: " . ($tenant ? "ID={$tenant->id}, Name={$tenant->business_name}" : 'NULL'));
 
         $validated = $request->validate([
-            'invoice_number'   => 'required|string|unique:transactions,receipt_number',
+            'invoice_number'   => 'required|string',
             'total_amount'     => 'required|numeric|min:0',
             'payment_method'   => 'required|string|in:CASH,QRIS,DEBIT',
             'cashier_id'       => 'nullable|integer',
