@@ -4,7 +4,7 @@ import { Head, router } from '@inertiajs/react';
 
 export default function CashDrawerLogs({ logs, filters }) {
     const handleDateChange = (e) => {
-        router.get(route('reports.cashDrawerLogs'), { date: e.target.value }, { preserveState: true });
+        router.get('/owner/reports/cash-drawer-logs', { date: e.target.value }, { preserveState: true });
     };
 
     return (
@@ -33,7 +33,7 @@ export default function CashDrawerLogs({ logs, filters }) {
                                     />
                                     {filters.date && (
                                         <button 
-                                            onClick={() => router.get(route('reports.cashDrawerLogs'))}
+                                            onClick={() => router.get('/owner/reports/cash-drawer-logs')}
                                             className="text-sm text-gray-500 hover:text-red-500 underline ml-2"
                                         >
                                             Reset

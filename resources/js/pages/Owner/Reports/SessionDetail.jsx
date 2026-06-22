@@ -16,12 +16,12 @@ export default function SessionDetail({ session, transactions }) {
     };
 
     return (
-        <AppLayout breadcrumbs={[{ title: 'Dashboard', href: '/dashboard' }, { title: 'Sesi Kasir', href: route('reports.sessions') }, { title: `Detail Sesi ${session.cashier?.name}`, href: route('reports.sessions.detail', session.id) }]}>
+        <AppLayout breadcrumbs={[{ title: 'Dashboard', href: '/dashboard' }, { title: 'Sesi Kasir', href: '/owner/reports/sessions' }, { title: `Detail Sesi ${session.cashier?.name}`, href: `/owner/reports/sessions/${session.id}` }]}>
             <Head title={`Detail Sesi - ${session.cashier?.name}`} />
             
             <div className="flex flex-col gap-6">
                 <div className="flex items-center gap-4">
-                    <Link href={route('reports.sessions')}>
+                    <Link href="/owner/reports/sessions">
                         <Button variant="outline" size="icon">
                             <ArrowLeft className="h-4 w-4" />
                         </Button>

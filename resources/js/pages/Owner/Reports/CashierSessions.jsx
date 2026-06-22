@@ -14,7 +14,7 @@ export default function CashierSessions({ sessions, stats, filters }) {
     useEffect(() => {
         const delay = setTimeout(() => {
             if (month !== (filters?.month || '')) {
-                router.get(route('reports.sessions'), { month }, { preserveState: true, replace: true });
+                router.get('/owner/reports/sessions', { month }, { preserveState: true, replace: true });
             }
         }, 300);
         return () => clearTimeout(delay);
@@ -27,7 +27,7 @@ export default function CashierSessions({ sessions, stats, filters }) {
     };
 
     return (
-        <AppLayout breadcrumbs={[{ title: 'Dashboard', href: '/dashboard' }, { title: 'Sesi Kasir', href: route('reports.sessions') }]}>
+        <AppLayout breadcrumbs={[{ title: 'Dashboard', href: '/dashboard' }, { title: 'Sesi Kasir', href: '/owner/reports/sessions' }]}>
             <Head title="Laporan Sesi Kasir" />
             
             <div className="flex h-full flex-1 flex-col gap-6 p-4 md:p-8 max-w-7xl mx-auto w-full print:p-0">
@@ -111,7 +111,7 @@ export default function CashierSessions({ sessions, stats, filters }) {
                                             </span>
                                         </TableCell>
                                         <TableCell className="text-right print:hidden">
-                                            <Link href={route('reports.sessions.detail', session.id)}>
+                                            <Link href={`/owner/reports/sessions/${session.id}`}>
                                                 <Button variant="outline" size="sm">
                                                     Lihat Detail
                                                 </Button>
