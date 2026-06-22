@@ -105,4 +105,42 @@ class RestockController extends Controller
             return response()->json(['message' => 'Gagal mencatat restock: ' . $e->getMessage()], 500);
         }
     }
+
+    /**
+     * DELETE /api/v1/restocks/{id}
+     * Delete restock and revert stock quantity.
+     */
+    public function destroy($id)
+    {
+        $tenant = app('tenant');
+        $restock = Restock::where('tenant_id', $tenant->id)->findOrFail($id);
+
+        DB::beginTransaction();
+        try {
+            // Revert Stok
+            if ($restock->product_id) {
+                $product = Product::where('id', $restock->product_id)
+                    ->where('tenant_id', $tenant->id)->first();
+                if ($product) {
+                    $product->decrement('stock', $restock->quantity);
+                }
+            }
+
+            if ($restock->raw_material_id) {
+                $material = RawMaterial::where('id', $restock->raw_material_id)
+                    ->where('tenant_id', $tenant->id)->first();
+                if ($material) {
+                    $material->decrement('stock', $restock->quantity);
+                }
+            }
+
+            $restock->delete();
+            DB::commit();
+
+            return response()->json(['message' => 'Restock deleted successfully']);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['message' => 'Failed to delete restock: ' . $e->getMessage()], 500);
+        }
+    }
 }
