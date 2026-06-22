@@ -98,7 +98,9 @@ Route::prefix('v1')
                 Route::get('/reports/top-products', [\App\Http\Controllers\Api\V1\ReportController::class, 'topProducts']);
 
                 // ── Expenses & Restocks ────────────────────
+                Route::get('/expenses', [\App\Http\Controllers\Api\V1\ExpenseController::class, 'index']);
                 Route::post('/expenses', [\App\Http\Controllers\Api\V1\ExpenseController::class, 'store']);
+                Route::delete('/expenses/{id}', [\App\Http\Controllers\Api\V1\ExpenseController::class, 'destroy']);
                 Route::get('/restocks',  [\App\Http\Controllers\Api\V1\RestockController::class, 'index']);
                 Route::post('/restocks', [\App\Http\Controllers\Api\V1\RestockController::class, 'store']);
 

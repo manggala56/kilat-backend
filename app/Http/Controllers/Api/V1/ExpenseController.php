@@ -9,6 +9,17 @@ use Illuminate\Http\Request;
 class ExpenseController extends Controller
 {
     /**
+     * GET /api/v1/expenses
+     * Get all expenses for tenant.
+     */
+    public function index()
+    {
+        $tenant = app('tenant');
+        $expenses = Expense::where('tenant_id', $tenant->id)->get();
+        return response()->json($expenses);
+    }
+
+    /**
      * POST /api/v1/expenses
      * Store new expense from mobile app.
      */
@@ -37,5 +48,18 @@ class ExpenseController extends Controller
             'message' => 'Expense created successfully',
             'data'    => $expense
         ], 201);
+    }
+
+    /**
+     * DELETE /api/v1/expenses/{id}
+     * Delete expense
+     */
+    public function destroy($id)
+    {
+        $tenant = app('tenant');
+        $expense = Expense::where('tenant_id', $tenant->id)->findOrFail($id);
+        $expense->delete();
+
+        return response()->json(['message' => 'Expense deleted successfully']);
     }
 }
