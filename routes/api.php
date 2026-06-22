@@ -97,6 +97,11 @@ Route::prefix('v1')
                 Route::get('/reports/daily',        [\App\Http\Controllers\Api\V1\ReportController::class, 'daily']);
                 Route::get('/reports/top-products', [\App\Http\Controllers\Api\V1\ReportController::class, 'topProducts']);
 
+                // ── Expenses & Restocks ────────────────────
+                Route::post('/expenses', [\App\Http\Controllers\Api\V1\ExpenseController::class, 'store']);
+                Route::get('/restocks',  [\App\Http\Controllers\Api\V1\RestockController::class, 'index']);
+                Route::post('/restocks', [\App\Http\Controllers\Api\V1\RestockController::class, 'store']);
+
                 // ── Employees ──────────────────────────────
                 // #21 GET /v1/employees
                 Route::get('/employees', [\App\Http\Controllers\Api\V1\EmployeeController::class, 'index']);
