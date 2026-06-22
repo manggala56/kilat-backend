@@ -2,14 +2,42 @@ import React from 'react';
 import AppLayout from '@/layouts/app-layout';
 import { Head, router } from '@inertiajs/react';
 
-export default function CashDrawerLogs({ logs, filters }) {
-    const handleDateChange = (e) => {
+interface CashDrawerLog {
+    id: number;
+    employee_name: string;
+    reason: string;
+    opened_at: string;
+}
+
+interface PaginationLink {
+    url: string | null;
+    label: string;
+    active: boolean;
+}
+
+interface PaginatedLogs {
+    data: CashDrawerLog[];
+    links: PaginationLink[];
+}
+
+interface Filters {
+    date?: string;
+}
+
+export default function CashDrawerLogs({ logs, filters }: {
+    logs: PaginatedLogs;
+    filters: Filters;
+}) {
+    const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         router.get('/owner/reports/cash-drawer-logs', { date: e.target.value }, { preserveState: true });
     };
 
     return (
         <AppLayout
-            header={<h2 className="font-semibold text-xl text-gray-800 leading-tight">Laporan Buka Laci (Cash Drawer)</h2>}
+            breadcrumbs={[
+                { title: 'Dashboard', href: '/dashboard' },
+                { title: 'Cash Drawer Logs', href: '/owner/reports/cash-drawer-logs' },
+            ]}
         >
             <Head title="Cash Drawer Logs" />
 
@@ -17,7 +45,7 @@ export default function CashDrawerLogs({ logs, filters }) {
                 <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
                     <div className="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                         <div className="p-6 text-gray-900">
-                            
+
                             <div className="mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                                 <div>
                                     <h3 className="text-lg font-medium">Histori Pembukaan Laci Manual</h3>
@@ -25,14 +53,14 @@ export default function CashDrawerLogs({ logs, filters }) {
                                 </div>
                                 <div className="flex items-center space-x-2">
                                     <label className="text-sm font-medium text-gray-700">Tanggal:</label>
-                                    <input 
-                                        type="date" 
+                                    <input
+                                        type="date"
                                         className="border-gray-300 focus:border-orange-500 focus:ring-orange-500 rounded-md shadow-sm"
                                         value={filters.date || ''}
                                         onChange={handleDateChange}
                                     />
                                     {filters.date && (
-                                        <button 
+                                        <button
                                             onClick={() => router.get('/owner/reports/cash-drawer-logs')}
                                             className="text-sm text-gray-500 hover:text-red-500 underline ml-2"
                                         >
@@ -53,7 +81,7 @@ export default function CashDrawerLogs({ logs, filters }) {
                                     </thead>
                                     <tbody>
                                         {logs.data.length > 0 ? (
-                                            logs.data.map((log) => (
+                                            logs.data.map((log: CashDrawerLog) => (
                                                 <tr key={log.id} className="bg-white border-b hover:bg-gray-50">
                                                     <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">
                                                         {log.opened_at}
@@ -68,7 +96,7 @@ export default function CashDrawerLogs({ logs, filters }) {
                                             ))
                                         ) : (
                                             <tr>
-                                                <td colSpan="3" className="px-6 py-4 text-center text-gray-500 italic">
+                                                <td colSpan={3} className="px-6 py-4 text-center text-gray-500 italic">
                                                     Tidak ada histori pembukaan laci pada tanggal ini.
                                                 </td>
                                             </tr>
@@ -81,7 +109,7 @@ export default function CashDrawerLogs({ logs, filters }) {
                             {logs.links && logs.links.length > 3 && (
                                 <div className="mt-4 flex justify-end">
                                     <div className="flex gap-1">
-                                        {logs.links.map((link, idx) => (
+                                        {logs.links.map((link: PaginationLink, idx: number) => (
                                             <button
                                                 key={idx}
                                                 onClick={() => link.url && router.get(link.url)}

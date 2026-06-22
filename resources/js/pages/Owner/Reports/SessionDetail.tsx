@@ -7,8 +7,43 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, CheckCircle2, XCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
-export default function SessionDetail({ session, transactions }) {
-    const formatCurrency = (amount) => {
+interface Cashier {
+    id: number;
+    name: string;
+}
+
+interface Session {
+    id: number;
+    cashier: Cashier | null;
+    clock_in_time: string;
+    clock_out_time: string | null;
+    starting_cash: number;
+    system_recorded_cash: number;
+    actual_cash_input: number;
+    discrepancy: number;
+}
+
+interface TransactionItem {
+    id: number;
+    quantity: number;
+    product_name: string;
+    is_cancelled: boolean;
+}
+
+interface Transaction {
+    id: number;
+    receipt_number: string;
+    payment_method: string;
+    total_amount: number;
+    transacted_at: string;
+    items: TransactionItem[];
+}
+
+export default function SessionDetail({ session, transactions }: {
+    session: Session;
+    transactions: Transaction[];
+}) {
+    const formatCurrency = (amount: number) => {
         return new Intl.NumberFormat('id-ID', {
             style: 'currency',
             currency: 'IDR'

@@ -8,7 +8,47 @@ import { Input } from '@/components/ui/input';
 import { Pagination } from '@/components/Pagination';
 import { Printer, AlertCircle, Activity } from 'lucide-react';
 
-export default function CashierSessions({ sessions, stats, filters }) {
+interface Cashier {
+    id: number;
+    name: string;
+}
+
+interface CashierSession {
+    id: number;
+    cashier: Cashier | null;
+    clock_in_time: string;
+    clock_out_time: string | null;
+    starting_cash: number;
+    system_ending_cash: number;
+    actual_ending_cash: number;
+    discrepancy: number;
+}
+
+interface PaginationLink {
+    url: string | null;
+    label: string;
+    active: boolean;
+}
+
+interface PaginatedSessions {
+    data: CashierSession[];
+    links: PaginationLink[];
+}
+
+interface Stats {
+    total_sessions: number;
+    total_discrepancy: number;
+}
+
+interface Filters {
+    month?: string;
+}
+
+export default function CashierSessions({ sessions, stats, filters }: {
+    sessions: PaginatedSessions;
+    stats: Stats;
+    filters: Filters;
+}) {
     const [month, setMonth] = useState(filters?.month || '');
 
     useEffect(() => {
@@ -19,7 +59,7 @@ export default function CashierSessions({ sessions, stats, filters }) {
         }, 300);
         return () => clearTimeout(delay);
     }, [month]);
-    const formatCurrency = (amount) => {
+    const formatCurrency = (amount: number) => {
         return new Intl.NumberFormat('id-ID', {
             style: 'currency',
             currency: 'IDR'
