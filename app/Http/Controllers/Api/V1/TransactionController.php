@@ -31,7 +31,8 @@ class TransactionController extends Controller
             'cashier_id'       => 'nullable|integer',
             'cashier_session_id' => 'nullable|integer',
             'items'            => 'required|array|min:1',
-            'items.*.product_id' => 'required|integer|exists:products,id',
+            'items.*.product_id' => 'nullable|integer',
+            'items.*.product_name' => 'nullable|string',
             'items.*.quantity'   => 'required|integer|min:1',
             'items.*.unit_price' => 'required|numeric|min:0',
             'items.*.subtotal'   => 'required|numeric|min:0',
@@ -63,37 +64,39 @@ class TransactionController extends Controller
             ]);
 
             foreach ($validated['items'] as $item) {
-                // Cek apakah produk punya resep dan ambil data product
-                $product = Product::with('recipeItems.rawMaterial')
-                    ->where('id', $item['product_id'])
-                    ->where('tenant_id', $tenant->id)
-                    ->first();
-
-                if (!$product) {
-                    throw new \Exception("Product not found");
+                $product = null;
+                if (!empty($item['product_id'])) {
+                    $product = Product::with('recipeItems.rawMaterial')
+                        ->where('id', $item['product_id'])
+                        ->where('tenant_id', $tenant->id)
+                        ->first();
                 }
+
+                $productName = $item['product_name'] ?? ($product ? $product->name : 'Unknown Product');
 
                 TransactionItem::create([
                     'transaction_id' => $transaction->id,
-                    'product_id'     => $item['product_id'],
-                    'product_name'   => $product->name,
+                    'product_id'     => $product ? $product->id : null,
+                    'product_name'   => $productName,
                     'quantity'       => $item['quantity'],
                     'unit_price'     => $item['unit_price'],
                     'subtotal'       => $item['subtotal'],
                     'notes'          => $item['notes'] ?? null,
                 ]);
 
-                if ($product->recipeItems->isNotEmpty()) {
-                    // Kurangi stok bahan mentah (Raw Materials)
-                    foreach ($product->recipeItems as $recipe) {
-                        if ($recipe->rawMaterial) {
-                            $deduction = $recipe->quantity * $item['quantity'];
-                            $recipe->rawMaterial->decrement('stock', $deduction);
+                if ($product) {
+                    if ($product->recipeItems->isNotEmpty()) {
+                        // Kurangi stok bahan mentah (Raw Materials)
+                        foreach ($product->recipeItems as $recipe) {
+                            if ($recipe->rawMaterial) {
+                                $deduction = $recipe->quantity * $item['quantity'];
+                                $recipe->rawMaterial->decrement('stock', $deduction);
+                            }
                         }
+                    } else {
+                        // Kurangi stok produk secara langsung (Perilaku default)
+                        $product->decrement('stock', $item['quantity']);
                     }
-                } else {
-                    // Kurangi stok produk secara langsung (Perilaku default)
-                    $product->decrement('stock', $item['quantity']);
                 }
             }
 
