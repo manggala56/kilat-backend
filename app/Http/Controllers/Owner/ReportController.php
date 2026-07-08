@@ -19,14 +19,15 @@ class ReportController extends Controller
     public function index(Request $request)
     {
         $tenant = $request->user()->tenants()->first() ?? abort(403);
-        $date   = $request->query('date', now()->toDateString());
+        $startDate = $request->query('start_date', now()->toDateString());
+        $endDate = $request->query('end_date', $startDate);
         $cashierId = $request->query('cashier_id');
         $employees = \App\Models\Employee::where('tenant_id', $tenant->id)->get(['id', 'name']);
 
-        // Statistik harian
+        // Statistik harian / range
         $dailyStats = Transaction::where('tenant_id', $tenant->id)
             ->where('status', 'completed')
-            ->whereDate('transacted_at', $date)
+            ->whereBetween('transacted_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59'])
             ->when($cashierId, fn($q) => $q->where('cashier_id', $cashierId))
             ->selectRaw('SUM(total_amount) as total_sales, COUNT(*) as transaction_count')
             ->first();
@@ -38,7 +39,7 @@ class ReportController extends Controller
             ->join('categories as c', 'c.id', '=', 'p.category_id')
             ->where('t.tenant_id', $tenant->id)
             ->where('t.status', 'completed')
-            ->whereDate('t.transacted_at', $date)
+            ->whereBetween('t.transacted_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59'])
             ->when($cashierId, fn($q) => $q->where('t.cashier_id', $cashierId))
             ->where('c.type', 'ROOM')
             ->sum('ti.subtotal');
@@ -46,26 +47,26 @@ class ReportController extends Controller
         $totalSalesVal = (float) ($dailyStats->total_sales ?? 0);
         $fnbSales = $totalSalesVal - (float) $roomSales;
 
-        // Hitung Total HPP (COGS) dari produk yang terjual hari ini
+        // Hitung Total HPP (COGS) dari produk yang terjual hari ini/range
         $totalCogs = DB::table('transaction_items as ti')
             ->join('transactions as t', 't.id', '=', 'ti.transaction_id')
             ->where('t.tenant_id', $tenant->id)
             ->where('t.status', 'completed')
-            ->whereDate('t.transacted_at', $date)
+            ->whereBetween('t.transacted_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59'])
             ->when($cashierId, fn($q) => $q->where('t.cashier_id', $cashierId))
             ->sum(DB::raw('ti.quantity * ti.hpp_snapshot')); 
 
         $grossProfit = $totalSalesVal - $totalCogs;
 
-        // Hitung Pengeluaran harian
+        // Hitung Pengeluaran harian/range
         $dailyExpenses = \App\Models\Expense::where('tenant_id', $tenant->id)
-            ->whereDate('expense_date', $date)
+            ->whereBetween('expense_date', [$startDate, $endDate])
             ->sum('amount');
 
-        // Hitung Payroll harian
+        // Hitung Payroll harian/range
         $dailyPayrolls = \App\Models\Payroll::where('tenant_id', $tenant->id)
             ->where('status', 'paid')
-            ->whereDate('updated_at', $date)
+            ->whereBetween('updated_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59'])
             ->sum('net_salary');
 
         $netProfit = $grossProfit - $dailyExpenses - $dailyPayrolls;
@@ -75,7 +76,7 @@ class ReportController extends Controller
         $inflows = DB::table('transactions')
             ->where('tenant_id', $tenant->id)
             ->where('status', 'completed')
-            ->whereDate('transacted_at', $date)
+            ->whereBetween('transacted_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59'])
             ->when($cashierId, fn($q) => $q->where('cashier_id', $cashierId))
             ->selectRaw('payment_method, SUM(total_amount) as total')
             ->groupBy('payment_method')
@@ -89,19 +90,19 @@ class ReportController extends Controller
 
         // Lists of daily outflows
         $expensesList = \App\Models\Expense::where('tenant_id', $tenant->id)
-            ->whereDate('expense_date', $date)
+            ->whereBetween('expense_date', [$startDate, $endDate])
             ->get();
         $payrollsList = \App\Models\Payroll::where('tenant_id', $tenant->id)
             ->where('status', 'paid')
-            ->whereDate('updated_at', $date)
+            ->whereBetween('updated_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59'])
             ->with('employee:id,name')
             ->get();
 
         // ── BALANCE SHEET (NERACA) ──
         // Cash asset (All-time sales - All-time expenses - All-time payrolls)
-        $allTimeSales = Transaction::where('tenant_id', $tenant->id)->where('status', 'completed')->whereDate('transacted_at', '<=', $date)->sum('total_amount');
-        $allTimeExpenses = \App\Models\Expense::where('tenant_id', $tenant->id)->whereDate('expense_date', '<=', $date)->sum('amount');
-        $allTimePayrolls = \App\Models\Payroll::where('tenant_id', $tenant->id)->where('status', 'paid')->whereDate('updated_at', '<=', $date)->sum('net_salary');
+        $allTimeSales = Transaction::where('tenant_id', $tenant->id)->where('status', 'completed')->where('transacted_at', '<=', $endDate . ' 23:59:59')->sum('total_amount');
+        $allTimeExpenses = \App\Models\Expense::where('tenant_id', $tenant->id)->where('expense_date', '<=', $endDate)->sum('amount');
+        $allTimePayrolls = \App\Models\Payroll::where('tenant_id', $tenant->id)->where('status', 'paid')->where('updated_at', '<=', $endDate . ' 23:59:59')->sum('net_salary');
         
         $cashAsset = (float) $allTimeSales - (float) $allTimeExpenses - (float) $allTimePayrolls;
         
@@ -123,7 +124,7 @@ class ReportController extends Controller
             ->leftJoin('categories as c', 'c.id', '=', 'p.category_id')
             ->where('t.tenant_id', $tenant->id)
             ->where('t.status', 'completed')
-            ->whereDate('t.transacted_at', $date)
+            ->whereBetween('t.transacted_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59'])
             ->when($cashierId, fn($q) => $q->where('t.cashier_id', $cashierId))
             ->select(
                 DB::raw('COALESCE(c.name, "Uncategorized") as category_name'),
@@ -140,7 +141,7 @@ class ReportController extends Controller
             ->join('products as p', 'p.id', '=', 'ti.product_id')
             ->where('t.tenant_id', $tenant->id)
             ->where('t.status', 'completed')
-            ->whereDate('t.transacted_at', $date)
+            ->whereBetween('t.transacted_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59'])
             ->when($cashierId, fn($q) => $q->where('t.cashier_id', $cashierId))
             ->select(
                 'p.name',
@@ -152,11 +153,11 @@ class ReportController extends Controller
             ->limit(10)
             ->get();
 
-        // Pendapatan 7 hari terakhir (chart)
+        // Pendapatan berdasarkan Range Tanggal (chart)
         $weeklyRevenue = DB::table('transactions')
             ->where('tenant_id', $tenant->id)
             ->where('status', 'completed')
-            ->where('transacted_at', '>=', now()->subDays(6)->startOfDay())
+            ->whereBetween('transacted_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59'])
             ->when($cashierId, fn($q) => $q->where('cashier_id', $cashierId))
             ->selectRaw("DATE(transacted_at) as date, SUM(total_amount) as revenue")
             ->groupBy('date')
@@ -164,7 +165,8 @@ class ReportController extends Controller
             ->get();
 
         return Inertia::render('Owner/Reports/Index', [
-            'date'          => $date,
+            'start_date'    => $startDate,
+            'end_date'      => $endDate,
             'cashier_id'    => $cashierId,
             'employees'     => $employees,
             'dailyStats'    => [

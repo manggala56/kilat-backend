@@ -14,8 +14,9 @@ import * as reports from '@/routes/owner/reports';
 
 type TabType = 'PL' | 'CASH_FLOW' | 'BALANCE_SHEET' | 'CATEGORIES';
 
-export default function ReportsIndex({ date, cashier_id, employees, dailyStats, cashFlow, balanceSheet, categoryBreakdown, topProducts, weeklyRevenue }: any) {
-    const [selectedDate, setSelectedDate] = useState(date);
+export default function ReportsIndex({ start_date, end_date, cashier_id, employees, dailyStats, cashFlow, balanceSheet, categoryBreakdown, topProducts, weeklyRevenue }: any) {
+    const [selectedStartDate, setSelectedStartDate] = useState(start_date);
+    const [selectedEndDate, setSelectedEndDate] = useState(end_date);
     const [selectedCashier, setSelectedCashier] = useState(cashier_id || 'all');
     const [activeTab, setActiveTab] = useState<TabType>('PL');
 
@@ -27,7 +28,8 @@ export default function ReportsIndex({ date, cashier_id, employees, dailyStats, 
     const handleFilter = (e: React.FormEvent) => {
         e.preventDefault();
         router.get(reports.index.url(), { 
-            date: selectedDate,
+            start_date: selectedStartDate,
+            end_date: selectedEndDate,
             cashier_id: selectedCashier !== 'all' ? selectedCashier : '' 
         }, { preserveState: true });
     };
@@ -88,10 +90,17 @@ export default function ReportsIndex({ date, cashier_id, employees, dailyStats, 
                             </Select>
                         </div>
                         <div className="grid gap-1.5">
-                            <Label htmlFor="date" className="text-xs text-muted-foreground ml-1">Pilih Tanggal</Label>
+                            <Label htmlFor="start_date" className="text-xs text-muted-foreground ml-1">Mulai Tanggal</Label>
                             <div className="relative">
                                 <CalendarIcon className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                                <Input id="date" type="date" className="pl-8 w-[150px] h-9" value={selectedDate} onChange={e => setSelectedDate(e.target.value)} />
+                                <Input id="start_date" type="date" className="pl-8 w-[140px] h-9" value={selectedStartDate} onChange={e => setSelectedStartDate(e.target.value)} />
+                            </div>
+                        </div>
+                        <div className="grid gap-1.5">
+                            <Label htmlFor="end_date" className="text-xs text-muted-foreground ml-1">Sampai Tanggal</Label>
+                            <div className="relative">
+                                <CalendarIcon className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                                <Input id="end_date" type="date" className="pl-8 w-[140px] h-9" value={selectedEndDate} onChange={e => setSelectedEndDate(e.target.value)} />
                             </div>
                         </div>
                         <Button type="submit" size="sm" className="bg-[#FEB400] text-black hover:bg-[#e0a000]">Filter</Button>
@@ -257,7 +266,7 @@ export default function ReportsIndex({ date, cashier_id, employees, dailyStats, 
                                             {topProducts.length === 0 && (
                                                 <TableRow>
                                                     <TableCell colSpan={3} className="h-32 text-center text-muted-foreground">
-                                                        Belum ada produk terjual hari ini.
+                                                        Belum ada produk terjual di periode ini.
                                                     </TableCell>
                                                 </TableRow>
                                             )}
@@ -331,7 +340,7 @@ export default function ReportsIndex({ date, cashier_id, employees, dailyStats, 
                                             </TableBody>
                                         </Table>
                                     ) : (
-                                        <p className="text-xs text-muted-foreground italic">Tidak ada pengeluaran hari ini.</p>
+                                        <p className="text-xs text-muted-foreground italic">Tidak ada pengeluaran di periode ini.</p>
                                     )}
                                 </div>
 
@@ -355,7 +364,7 @@ export default function ReportsIndex({ date, cashier_id, employees, dailyStats, 
                                             </TableBody>
                                         </Table>
                                     ) : (
-                                        <p className="text-xs text-muted-foreground italic">Tidak ada pembayaran gaji hari ini.</p>
+                                        <p className="text-xs text-muted-foreground italic">Tidak ada pembayaran gaji di periode ini.</p>
                                     )}
                                 </div>
 
@@ -464,7 +473,7 @@ export default function ReportsIndex({ date, cashier_id, employees, dailyStats, 
                             <CardTitle className="text-lg flex items-center gap-2">
                                 <FileText className="h-5 w-5 text-muted-foreground" /> Laporan Pendapatan Berdasarkan Kategori
                             </CardTitle>
-                            <CardDescription>Rincian performa penjualan terperinci per kategori produk hari ini.</CardDescription>
+                            <CardDescription>Rincian performa penjualan terperinci per kategori produk di periode ini.</CardDescription>
                         </CardHeader>
                         <CardContent className="p-0">
                             <Table>
@@ -496,7 +505,7 @@ export default function ReportsIndex({ date, cashier_id, employees, dailyStats, 
                                     {categoryBreakdown.length === 0 && (
                                         <TableRow>
                                             <TableCell colSpan={4} className="h-32 text-center text-muted-foreground">
-                                                Belum ada produk terjual hari ini.
+                                                Belum ada produk terjual di periode ini.
                                             </TableCell>
                                         </TableRow>
                                     )}
