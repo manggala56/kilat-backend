@@ -19,6 +19,7 @@ export default function ReportsIndex({ start_date, end_date, cashier_id, employe
     const [selectedEndDate, setSelectedEndDate] = useState(end_date);
     const [selectedCashier, setSelectedCashier] = useState(cashier_id || 'all');
     const [activeTab, setActiveTab] = useState<TabType>('PL');
+    const date = selectedStartDate === selectedEndDate ? selectedStartDate : `${selectedStartDate} - ${selectedEndDate}`;
 
     const breadcrumbs = [
         { title: 'Dashboard', href: '/dashboard' },
