@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { BadgeDollarSign, ReceiptText, TrendingUp, Package, Calendar as CalendarIcon, Wallet, FileText, ArrowDownRight, ArrowUpRight } from 'lucide-react';
+import { BadgeDollarSign, ReceiptText, TrendingUp, Package, Calendar as CalendarIcon, Wallet, FileText, ArrowDownRight, ArrowUpRight, ChevronDown, ChevronUp } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
@@ -19,6 +19,7 @@ export default function ReportsIndex({ start_date, end_date, cashier_id, employe
     const [selectedEndDate, setSelectedEndDate] = useState(end_date);
     const [selectedCashier, setSelectedCashier] = useState(cashier_id || 'all');
     const [activeTab, setActiveTab] = useState<TabType>('PL');
+    const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
     const date = selectedStartDate === selectedEndDate ? selectedStartDate : `${selectedStartDate} - ${selectedEndDate}`;
 
     const breadcrumbs = [
@@ -488,20 +489,41 @@ export default function ReportsIndex({ start_date, end_date, cashier_id, employe
                                 </TableHeader>
                                 <TableBody>
                                     {categoryBreakdown.map((cat: any, idx: number) => (
-                                        <TableRow key={idx}>
-                                            <TableCell className="font-semibold">{cat.category_name}</TableCell>
-                                            <TableCell>
-                                                <Badge variant={cat.category_type === 'ROOM' ? 'default' : cat.category_type === 'FOOD' ? 'secondary' : 'outline'}>
-                                                    {cat.category_type}
-                                                </Badge>
-                                            </TableCell>
-                                            <TableCell className="text-center">
-                                                <Badge variant="outline" className="px-2 py-0.5">{cat.quantity} unit</Badge>
-                                            </TableCell>
-                                            <TableCell className="text-right text-[#FEB400] font-bold">
-                                                {formatRupiah(cat.total)}
-                                            </TableCell>
-                                        </TableRow>
+                                        <React.Fragment key={idx}>
+                                            <TableRow 
+                                                className="cursor-pointer hover:bg-muted/50"
+                                                onClick={() => setExpandedCategory(expandedCategory === cat.category_name ? null : cat.category_name)}
+                                            >
+                                                <TableCell className="font-semibold flex items-center gap-2">
+                                                    {expandedCategory === cat.category_name ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
+                                                    {cat.category_name}
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Badge variant={cat.category_type === 'ROOM' ? 'default' : cat.category_type === 'FOOD' ? 'secondary' : 'outline'}>
+                                                        {cat.category_type}
+                                                    </Badge>
+                                                </TableCell>
+                                                <TableCell className="text-center">
+                                                    <Badge variant="outline" className="px-2 py-0.5">{cat.quantity} unit</Badge>
+                                                </TableCell>
+                                                <TableCell className="text-right text-[#FEB400] font-bold">
+                                                    {formatRupiah(cat.total)}
+                                                </TableCell>
+                                            </TableRow>
+                                            {expandedCategory === cat.category_name && cat.items && cat.items.map((item: any, i: number) => (
+                                                <TableRow key={`item-${idx}-${i}`} className="bg-muted/10">
+                                                    <TableCell className="pl-10 text-sm text-muted-foreground" colSpan={2}>
+                                                        ↳ {item.name}
+                                                    </TableCell>
+                                                    <TableCell className="text-center text-sm text-muted-foreground">
+                                                        {item.quantity} unit
+                                                    </TableCell>
+                                                    <TableCell className="text-right text-sm text-muted-foreground">
+                                                        {formatRupiah(item.total)}
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))}
+                                        </React.Fragment>
                                     ))}
                                     {categoryBreakdown.length === 0 && (
                                         <TableRow>

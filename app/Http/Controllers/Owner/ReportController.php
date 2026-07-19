@@ -117,8 +117,8 @@ class ReportController extends Controller
         // Equity = Assets - Liabilities
         $equity = ($cashAsset + $inventoryAsset) - (float) $liabilities;
 
-        // ── CATEGORY SALES BREAKDOWN ──
-        $categoryBreakdown = DB::table('transaction_items as ti')
+        // ── CATEGORY SALES BREAKDOWN WITH ITEMS ──
+        $categoryItems = DB::table('transaction_items as ti')
             ->join('transactions as t', 't.id', '=', 'ti.transaction_id')
             ->join('products as p', 'p.id', '=', 'ti.product_id')
             ->leftJoin('categories as c', 'c.id', '=', 'p.category_id')
@@ -129,11 +129,29 @@ class ReportController extends Controller
             ->select(
                 DB::raw('COALESCE(c.name, "Uncategorized") as category_name'),
                 DB::raw('COALESCE(c.type, "OTHER") as category_type'),
+                'p.name as product_name',
                 DB::raw('SUM(ti.quantity) as quantity'),
                 DB::raw('SUM(ti.subtotal) as total')
             )
-            ->groupBy('category_name', 'category_type')
+            ->groupBy('category_name', 'category_type', 'product_name')
             ->get();
+
+        $categoryBreakdown = $categoryItems->groupBy('category_name')->map(function ($items, $categoryName) {
+            $firstItem = $items->first();
+            return [
+                'category_name' => $categoryName,
+                'category_type' => $firstItem->category_type,
+                'quantity' => $items->sum('quantity'),
+                'total' => $items->sum('total'),
+                'items' => $items->map(function ($item) {
+                    return [
+                        'name' => $item->product_name,
+                        'quantity' => $item->quantity,
+                        'total' => $item->total,
+                    ];
+                })->values()->all(),
+            ];
+        })->values()->all();
 
         // Top 10 produk
         $topProducts = DB::table('transaction_items as ti')
