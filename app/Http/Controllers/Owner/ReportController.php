@@ -133,7 +133,11 @@ class ReportController extends Controller
                 DB::raw('SUM(ti.quantity) as quantity'),
                 DB::raw('SUM(ti.subtotal) as total')
             )
-            ->groupBy('category_name', 'category_type', 'product_name')
+            ->groupBy(
+                DB::raw('COALESCE(c.name, "Uncategorized")'),
+                DB::raw('COALESCE(c.type, "OTHER")'),
+                'p.name'
+            )
             ->get();
 
         $categoryBreakdown = $categoryItems->groupBy('category_name')->map(function ($items, $categoryName) {
