@@ -147,7 +147,7 @@ class ReportController extends Controller
                 'category_type' => $firstItem->category_type,
                 'quantity' => $items->sum('quantity'),
                 'total' => $items->sum('total'),
-                'items' => $items->map(function ($item) {
+                'items' => $items->sortByDesc('quantity')->map(function ($item) {
                     return [
                         'name' => $item->product_name,
                         'quantity' => $item->quantity,
