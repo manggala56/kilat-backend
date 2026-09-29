@@ -98,6 +98,11 @@ const mainNavItems: NavItem[] = [
         ],
     },
     {
+        title: 'Meja & QR Order',
+        href: rooms.index.url(),
+        icon: Store,
+    },
+    {
         title: 'Manajemen Outlet',
         href: outlets.index.url(),
         icon: Store,

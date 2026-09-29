@@ -10,17 +10,35 @@ class Product extends Model
 {
     protected $fillable = [
         'tenant_id', 'category_id', 'name', 'sku', 'description',
-        'image', 'price', 'stock', 'low_stock_threshold',
+        'image', 'price', 'margin_percentage', 'stock', 'low_stock_threshold',
         'is_active', 'has_variants',
+        'is_available_online', 'is_best_seller', 'prep_time_minutes', 'tags', 'calories',
     ];
 
     protected $casts = [
         'price' => 'decimal:2',
         'is_active' => 'boolean',
         'has_variants' => 'boolean',
+        'is_available_online' => 'boolean',
+        'is_best_seller' => 'boolean',
+        'prep_time_minutes' => 'integer',
+        'tags' => 'array',
     ];
 
-    protected $appends = ['hpp'];
+    protected $appends = ['hpp', 'image_url'];
+
+    public function getImageUrlAttribute(): ?string
+    {
+        if (!$this->image) {
+            return null;
+        }
+
+        if (str_starts_with($this->image, 'http://') || str_starts_with($this->image, 'https://')) {
+            return $this->image;
+        }
+
+        return asset('storage/' . $this->image);
+    }
 
     public function tenant(): BelongsTo
     {

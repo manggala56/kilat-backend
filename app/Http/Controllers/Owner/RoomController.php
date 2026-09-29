@@ -26,6 +26,11 @@ class RoomController extends Controller
 
         return Inertia::render('Owner/Rooms/Index', [
             'rooms' => $rooms,
+            'tenant' => [
+                'id' => $tenant->id,
+                'store_id' => $tenant->store_id,
+                'business_name' => $tenant->business_name,
+            ],
             'filters' => $request->only('search'),
         ]);
     }

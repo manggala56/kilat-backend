@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Owner;
 use App\Http\Controllers\Controller;
 use App\Models\Tenant;
 use App\Models\SubscriptionPackage;
+use App\Models\Device;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
@@ -19,7 +20,7 @@ class OutletController extends Controller
         $user = $request->user();
         
         // Cek limit dari semua tenant tanpa paginasi
-        $allTenants = $user->tenants()->with('subscriptionPackage')->get();
+        $allTenants = $user->tenants()->with(['subscriptionPackage', 'devices'])->get();
         $maxOutlets = $allTenants
             ->pluck('subscriptionPackage.max_outlets')
             ->filter()
@@ -27,7 +28,7 @@ class OutletController extends Controller
             
         $totalOutlets = $allTenants->count();
 
-        $query = $user->tenants()->with('subscriptionPackage');
+        $query = $user->tenants()->with(['subscriptionPackage', 'devices']);
 
         if ($request->has('search')) {
             $search = $request->search;
@@ -126,5 +127,20 @@ class OutletController extends Controller
         $tenant->update(['status' => 'suspended']);
 
         return back()->with('success', 'Outlet berhasil dinonaktifkan.');
+    }
+
+    /**
+     * Putuskan / Revoke pairing perangkat POS dari dashboard web.
+     */
+    public function revokeDevice(Request $request, Device $device)
+    {
+        // Pastikan device milik salah satu tenant owner ini
+        $isOwner = $request->user()->tenants()->where('id', $device->tenant_id)->exists();
+        abort_unless($isOwner, 403, 'Akses tidak diizinkan.');
+
+        $device->update(['status' => 'revoked']);
+        $device->tokens()->delete();
+
+        return back()->with('success', "Perangkat \"{$device->device_name}\" berhasil diputuskan.");
     }
 }

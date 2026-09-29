@@ -95,4 +95,54 @@ class TransactionController extends Controller
             'transaction' => $transaction,
         ]);
     }
+
+    /**
+     * Konfirmasi penerimaan pembayaran pesanan online pending.
+     */
+    public function confirmOnlineOrder(Request $request, Transaction $transaction)
+    {
+        $tenant = $request->user()->tenant ?? abort(403);
+        abort_unless($transaction->tenant_id === $tenant->id, 403);
+
+        if ($transaction->status !== 'completed') {
+            DB::beginTransaction();
+            try {
+                $transaction->update([
+                    'status' => 'completed',
+                    'payment_status' => 'PAID',
+                    'amount_paid' => $transaction->total_amount,
+                    'transacted_at' => now(),
+                ]);
+
+                foreach ($transaction->items as $item) {
+                    if ($item->product) {
+                        $prod = $item->product;
+                        if ($prod->recipeItems->isNotEmpty()) {
+                            foreach ($prod->recipeItems as $recipe) {
+                                if ($recipe->rawMaterial) {
+                                    $recipe->rawMaterial->decrement('stock', $recipe->quantity * $item->quantity);
+                                }
+                            }
+                        } else {
+                            $prod->decrement('stock', $item->quantity);
+                        }
+                    }
+                }
+
+                DB::commit();
+
+                // Kirim sinyal update ke topic outlet & pelanggan
+                \App\Services\FirebaseNotificationService::sendOrderSignal(
+                    $tenant->store_id,
+                    'PAID',
+                    $transaction->id
+                );
+            } catch (\Exception $e) {
+                DB::rollBack();
+                return back()->withErrors(['error' => 'Gagal konfirmasi: ' . $e->getMessage()]);
+            }
+        }
+
+        return back()->with('success', 'Pesanan online Meja ' . ($transaction->table_number ?? '-') . ' berhasil dikonfirmasi lunas.');
+    }
 }

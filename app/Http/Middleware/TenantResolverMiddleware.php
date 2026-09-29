@@ -18,23 +18,27 @@ class TenantResolverMiddleware
     {
         $storeAlias = $request->header('X-Tenant-ID') ?: $request->header('X-Store-Alias');
 
-        if (!$storeAlias) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Tenant identification header (X-Tenant-ID or X-Store-Alias) is missing.'
-            ], 400);
-        }
+        $tenant = null;
 
-        $tenant = Tenant::where(function($query) use ($storeAlias) {
-            $query->where('store_id', $storeAlias)
-                  ->orWhere('id', $storeAlias);
-        })->where('status', 'active')->first();
+        if ($storeAlias) {
+            $tenant = Tenant::where(function($query) use ($storeAlias) {
+                $query->where('store_id', $storeAlias)
+                      ->orWhere('id', $storeAlias);
+            })->where('status', 'active')->first();
+        } elseif ($request->user()) {
+            $user = $request->user();
+            if (isset($user->tenant_id)) {
+                $tenant = Tenant::where('id', $user->tenant_id)->where('status', 'active')->first();
+            } elseif (method_exists($user, 'tenant') && $user->tenant) {
+                $tenant = $user->tenant;
+            }
+        }
 
         if (!$tenant) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Store not found or inactive.'
-            ], 404);
+                'message' => 'Store / Tenant not found or inactive. Please provide X-Tenant-ID header.'
+            ], $storeAlias ? 404 : 400);
         }
 
         // Bind tenant to service container
