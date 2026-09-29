@@ -3,7 +3,7 @@ import { Head, router } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Plus, Edit, Store, CheckCircle, XCircle, Lock, Search } from 'lucide-react';
+import { Plus, Edit, Store, CheckCircle, XCircle, Lock, Search, Smartphone, LogOut, ShieldAlert } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -11,6 +11,17 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { Pagination } from '@/components/Pagination';
 import * as outlets from '@/routes/owner/outlets';
+
+interface DeviceItem {
+    id: number;
+    device_id: string;
+    device_name: string;
+    device_model: string | null;
+    device_os: string | null;
+    status: 'active' | 'revoked';
+    last_active_at: string | null;
+    paired_at: string;
+}
 
 interface Tenant {
     id: number;
@@ -21,7 +32,9 @@ interface Tenant {
     subscription_package: {
         name: string;
         max_outlets: number;
+        max_devices_per_outlet?: number;
     } | null;
+    devices?: DeviceItem[];
 }
 
 export default function OutletsIndex({
@@ -110,6 +123,15 @@ export default function OutletsIndex({
             router.delete(outlets.destroy.url(tenant.id), {
                 onSuccess: () => toast.success('Outlet berhasil dinonaktifkan'),
                 onError: (err) => toast.error(err.error || 'Terjadi kesalahan'),
+            });
+        }
+    };
+
+    const handleRevokeDevice = (device: DeviceItem) => {
+        if (confirm(`Putuskan perangkat "${device.device_name}"? Sesi aplikasi POS pada perangkat ini akan langsung di-logout.`)) {
+            router.delete(`/owner/devices/${device.id}/revoke`, {
+                onSuccess: () => toast.success(`Perangkat "${device.device_name}" berhasil diputuskan`),
+                onError: (err: any) => toast.error(err.message || 'Gagal memutuskan perangkat'),
             });
         }
     };
@@ -218,19 +240,111 @@ export default function OutletsIndex({
                                         {' '}(max {t.subscription_package.max_outlets} outlet)
                                     </div>
                                 )}
-                                <div className="flex justify-end gap-2 pt-3 border-t">
-                                    <Button variant="outline" size="sm" onClick={() => openEditModal(t)}>
-                                        <Edit className="h-4 w-4 mr-1" /> Edit
-                                    </Button>
-                                    {t.status === 'active' && (
+
+                                {/* Online Order URL Banner */}
+                                <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-2.5 mb-3">
+                                    <div className="flex items-center justify-between text-xs font-semibold text-amber-500 mb-1">
+                                        <span>🌐 Link Pesan Online</span>
+                                        <Badge variant="outline" className="text-[10px] bg-amber-500/20 text-amber-500 border-amber-500/30">Guest QR Menu</Badge>
+                                    </div>
+                                    <div className="flex items-center gap-1.5 mt-1">
+                                        <code className="text-[11px] font-mono bg-background/80 px-2 py-1 rounded border flex-1 truncate text-foreground">
+                                            /order/{t.store_id}
+                                        </code>
                                         <Button
-                                            variant="destructive"
+                                            type="button"
+                                            variant="outline"
                                             size="sm"
-                                            onClick={() => handleSuspend(t)}
+                                            className="h-7 px-2 text-xs"
+                                            title="Salin Link Pesan Online"
+                                            onClick={() => {
+                                                const url = `${window.location.origin}/order/${t.store_id}`;
+                                                navigator.clipboard.writeText(url);
+                                                toast.success('Link Pesan Online berhasil disalin!');
+                                            }}
                                         >
-                                            Nonaktifkan
+                                            Salin
                                         </Button>
+                                        <Button
+                                            type="button"
+                                            size="sm"
+                                            className="h-7 px-2 text-xs bg-[#FEB400] text-black hover:bg-[#e0a000]"
+                                            title="Buka Halaman Pesan Online"
+                                            onClick={() => window.open(`/order/${t.store_id}`, '_blank')}
+                                        >
+                                            Buka
+                                        </Button>
+                                    </div>
+                                </div>
+
+                                {/* Connected POS Devices Section */}
+                                <div className="border rounded-lg p-2.5 mb-3 bg-muted/30">
+                                    <div className="flex items-center justify-between text-xs font-semibold mb-2">
+                                        <div className="flex items-center gap-1.5">
+                                            <Smartphone className="h-3.5 w-3.5 text-[#FEB400]" />
+                                            <span>Perangkat POS Terhubung</span>
+                                        </div>
+                                        <Badge variant="outline" className="text-[10px]">
+                                            {t.devices?.filter((d: any) => d.status === 'active').length || 0} / {t.subscription_package?.max_devices_per_outlet || 2} Kuota
+                                        </Badge>
+                                    </div>
+                                    
+                                    {(!t.devices || t.devices.filter((d: any) => d.status === 'active').length === 0) ? (
+                                        <p className="text-[11px] text-muted-foreground italic py-1">
+                                            Belum ada perangkat POS yang terhubung ke cabang ini.
+                                        </p>
+                                    ) : (
+                                        <div className="space-y-1.5">
+                                            {t.devices.filter((d: any) => d.status === 'active').map((device: any) => (
+                                                <div key={device.id} className="flex items-center justify-between p-1.5 rounded bg-background border text-xs">
+                                                    <div className="flex-1 min-w-0 mr-2">
+                                                        <div className="font-semibold truncate text-[11px] flex items-center gap-1">
+                                                            <span className="w-1.5 h-1.5 rounded-full bg-green-500 shrink-0" />
+                                                            <span className="truncate">{device.device_name}</span>
+                                                        </div>
+                                                        <div className="text-[10px] text-muted-foreground font-mono truncate">
+                                                            {device.device_model || 'Device'} • {device.last_active_at ? new Date(device.last_active_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : 'Aktif'}
+                                                        </div>
+                                                    </div>
+                                                    <Button
+                                                        type="button"
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        className="h-6 px-1.5 text-[10px] text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/30"
+                                                        title="Putuskan / Logout Perangkat POS"
+                                                        onClick={() => handleRevokeDevice(device)}
+                                                    >
+                                                        <LogOut className="h-3 w-3 mr-1" /> Putuskan
+                                                    </Button>
+                                                </div>
+                                            ))}
+                                        </div>
                                     )}
+                                </div>
+
+                                <div className="flex justify-between items-center pt-3 border-t">
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="text-xs text-muted-foreground hover:text-foreground"
+                                        onClick={() => router.get('/owner/rooms')}
+                                    >
+                                        QR Meja ➔
+                                    </Button>
+                                    <div className="flex gap-2">
+                                        <Button variant="outline" size="sm" onClick={() => openEditModal(t)}>
+                                            <Edit className="h-4 w-4 mr-1" /> Edit
+                                        </Button>
+                                        {t.status === 'active' && (
+                                            <Button
+                                                variant="destructive"
+                                                size="sm"
+                                                onClick={() => handleSuspend(t)}
+                                            >
+                                                Nonaktifkan
+                                            </Button>
+                                        )}
+                                    </div>
                                 </div>
                             </CardContent>
                         </Card>

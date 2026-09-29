@@ -25,4 +25,14 @@ class Tenant extends Model
     {
         return $this->belongsTo(SubscriptionPackage::class);
     }
+
+    public function devices()
+    {
+        return $this->hasMany(Device::class);
+    }
+
+    public function employees()
+    {
+        return $this->hasMany(Employee::class);
+    }
 }

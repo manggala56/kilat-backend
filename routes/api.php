@@ -31,6 +31,13 @@ Route::prefix('v1')
         // #2  POST /v1/register  — Daftar employee baru
         Route::post('/register', [\App\Http\Controllers\Api\V1\AuthController::class, 'register']);
 
+        // ── Online Orders Sync & Confirmation (POS Push-to-Pull) ──
+        Route::get('/online-orders/stream',        [\App\Http\Controllers\Api\V1\OnlineOrderSyncController::class, 'stream']);
+        Route::get('/online-orders/pending',       [\App\Http\Controllers\Api\V1\OnlineOrderSyncController::class, 'pending']);
+        Route::get('/online-orders/{id}',          [\App\Http\Controllers\Api\V1\OnlineOrderSyncController::class, 'show']);
+        Route::post('/online-orders/{id}/confirm', [\App\Http\Controllers\Api\V1\OnlineOrderSyncController::class, 'confirm']);
+
+
         // ─────────────────────────────────────────────────────
         // Protected endpoints — Sanctum Bearer Token ✅
         // ─────────────────────────────────────────────────────
@@ -77,6 +84,11 @@ Route::prefix('v1')
                 Route::get('/transactions',               [\App\Http\Controllers\Api\V1\TransactionController::class, 'index']);
                 Route::get('/transactions/{id}/items',    [\App\Http\Controllers\Api\V1\TransactionController::class, 'items']);
 
+                // ── Online Orders Sync & Confirmation (POS) ──
+                Route::get('/online-orders/pending',      [\App\Http\Controllers\Api\V1\OnlineOrderSyncController::class, 'pending']);
+                Route::get('/online-orders/{id}',         [\App\Http\Controllers\Api\V1\OnlineOrderSyncController::class, 'show']);
+                Route::post('/online-orders/{id}/confirm',[\App\Http\Controllers\Api\V1\OnlineOrderSyncController::class, 'confirm']);
+
                 // Cashier Sessions & Drawer Logs
                 Route::post('/cashier-sessions',          [\App\Http\Controllers\Api\V1\CashierSessionController::class, 'store']);
                 Route::post('/cash-drawer-logs',          [\App\Http\Controllers\Api\V1\CashDrawerLogController::class, 'store']);
@@ -118,3 +130,74 @@ Route::prefix('v1')
             }); // end tenant.resolver
         }); // end auth:sanctum
     }); // end v1
+
+// ─────────────────────────────────────────────────────────────
+// API v2 — Kilatz POS Modular (Device Pairing & Offline Cashier)
+// Base URL: {BASE_URL}/api/v2
+// ─────────────────────────────────────────────────────────────
+Route::prefix('v2')
+    ->middleware(['throttle:api'])
+    ->group(function () {
+
+        // ── Ping ────────────────────────────────────────────
+        Route::get('/ping', fn () => response()->json(['status' => 'ok', 'version' => 'v2', 'message' => 'API v2 is running']));
+
+        // ─────────────────────────────────────────────────────
+        // 1. Device Activation / Owner Pairing (No Token Required)
+        // ─────────────────────────────────────────────────────
+        Route::post('/device/verify-owner', [\App\Http\Controllers\Api\V2\DeviceAuthController::class, 'verifyOwner']);
+        Route::post('/device/activate',     [\App\Http\Controllers\Api\V2\DeviceAuthController::class, 'activate']);
+
+        // ─────────────────────────────────────────────────────
+        // 2. Protected by Device Sanctum Token & Tenant Resolver
+        // ─────────────────────────────────────────────────────
+        Route::middleware(['auth:sanctum', 'tenant.resolver'])->group(function () {
+
+            // ── Device & Staff Management ────────────────────
+            Route::get('/device/info',        [\App\Http\Controllers\Api\V2\DeviceAuthController::class, 'info']);
+            Route::get('/device/staff',       [\App\Http\Controllers\Api\V2\DeviceAuthController::class, 'syncStaff']);
+            Route::post('/device/deactivate', [\App\Http\Controllers\Api\V2\DeviceAuthController::class, 'deactivate']);
+            Route::post('/cashier/login',     [\App\Http\Controllers\Api\V2\DeviceAuthController::class, 'cashierLogin']);
+
+            // ── Cashier Shift / Tutup Kasir Sync ─────────────
+            Route::post('/cashier-sessions',   [\App\Http\Controllers\Api\V2\CashierSessionController::class, 'store']);
+            Route::post('/cash-drawer-logs',   [\App\Http\Controllers\Api\V2\CashDrawerLogController::class, 'store']);
+            Route::post('/attendance/clock-in',  [\App\Http\Controllers\Api\V2\AttendanceController::class, 'clockIn']);
+            Route::post('/attendance/clock-out', [\App\Http\Controllers\Api\V2\AttendanceController::class, 'clockOut']);
+
+            // ── Transactions ─────────────────────────────────
+            Route::post('/transactions',                      [\App\Http\Controllers\Api\V2\TransactionController::class, 'store']);
+            Route::get('/transactions',                       [\App\Http\Controllers\Api\V2\TransactionController::class, 'index']);
+            Route::post('/transactions/{invoice}/cancel-item', [\App\Http\Controllers\Api\V2\TransactionController::class, 'cancelItem']);
+
+            // ── Master Data & Catalog ────────────────────────
+            Route::get('/products',   [\App\Http\Controllers\Api\V2\ProductController::class, 'index']);
+            Route::post('/products',  [\App\Http\Controllers\Api\V2\ProductController::class, 'store']);
+            Route::get('/categories', [\App\Http\Controllers\Api\V2\CategoryController::class, 'index']);
+            Route::post('/categories',[\App\Http\Controllers\Api\V2\CategoryController::class, 'store']);
+            Route::get('/materials',  [\App\Http\Controllers\Api\V2\RawMaterialController::class, 'index']);
+            Route::get('/recipes',    [\App\Http\Controllers\Api\V2\RecipeController::class, 'index']);
+
+            // ── Inventory & Operations ───────────────────────
+            Route::get('/expenses',  [\App\Http\Controllers\Api\V2\ExpenseController::class, 'index']);
+            Route::post('/expenses', [\App\Http\Controllers\Api\V2\ExpenseController::class, 'store']);
+            Route::get('/restocks',  [\App\Http\Controllers\Api\V2\RestockController::class, 'index']);
+            Route::post('/restocks', [\App\Http\Controllers\Api\V2\RestockController::class, 'store']);
+
+            // ── Rooms ────────────────────────────────────────
+            Route::get('/rooms',                                     [\App\Http\Controllers\Api\V2\RoomController::class, 'index']);
+            Route::post('/rooms/{roomId}/sessions/start',            [\App\Http\Controllers\Api\V2\RoomController::class, 'startSession']);
+            Route::post('/rooms/{roomId}/sessions/{sessionId}/stop', [\App\Http\Controllers\Api\V2\RoomController::class, 'stopSession']);
+
+            // ── Reports ──────────────────────────────────────
+            Route::get('/reports/daily',        [\App\Http\Controllers\Api\V2\ReportController::class, 'daily']);
+            Route::get('/reports/top-products', [\App\Http\Controllers\Api\V2\ReportController::class, 'topProducts']);
+
+            // ── Online Orders ────────────────────────────────
+            Route::get('/online-orders/pending',       [\App\Http\Controllers\Api\V2\OnlineOrderSyncController::class, 'pending']);
+            Route::get('/online-orders/{id}',          [\App\Http\Controllers\Api\V2\OnlineOrderSyncController::class, 'show']);
+            Route::post('/online-orders/{id}/confirm', [\App\Http\Controllers\Api\V2\OnlineOrderSyncController::class, 'confirm']);
+
+        }); // end auth:sanctum & tenant.resolver
+    }); // end v2
+
