@@ -99,4 +99,26 @@ class OnlineOrderSyncController extends Controller
             'data'    => $transaction,
         ]);
     }
+
+    /**
+     * POST /api/v2/online-orders/{id}/complete
+     */
+    public function complete(Request $request, $id)
+    {
+        $tenant = app('tenant');
+
+        $transaction = Transaction::where('tenant_id', $tenant->id)
+            ->where('id', $id)
+            ->firstOrFail();
+
+        $transaction->update([
+            'status' => 'completed',
+        ]);
+
+        return response()->json([
+            'status'  => 'success',
+            'message' => 'Pesanan online selesai.',
+            'data'    => $transaction,
+        ]);
+    }
 }

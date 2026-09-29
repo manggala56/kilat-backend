@@ -156,6 +156,38 @@ class OnlineOrderSyncController extends Controller
     }
 
     /**
+     * POST /api/v1/online-orders/{id}/complete
+     * Kasir menyelesaikan pesanan online yang sudah diproses / disajikan.
+     */
+    public function complete(Request $request, $id)
+    {
+        $tenant = null;
+        if (app()->bound('tenant')) {
+            $tenant = app('tenant');
+        } elseif ($request->header('X-Tenant-ID') || $request->query('store_id')) {
+            $alias = $request->header('X-Tenant-ID') ?: $request->query('store_id');
+            $tenant = \App\Models\Tenant::where('store_id', $alias)->orWhere('id', $alias)->first();
+        }
+
+        $query = Transaction::where('id', $id);
+        if ($tenant) {
+            $query->where('tenant_id', $tenant->id);
+        }
+
+        $transaction = $query->firstOrFail();
+
+        $transaction->update([
+            'status' => 'completed',
+        ]);
+
+        return response()->json([
+            'status'  => 'success',
+            'message' => 'Pesanan online selesai.',
+            'data'    => $transaction->fresh(['items.product.category']),
+        ]);
+    }
+
+    /**
      * GET /api/v1/online-orders/stream
      * Server-Sent Events (SSE) stream untuk notifikasi real-time instan ke Mobile POS.
      */

@@ -32,10 +32,11 @@ Route::prefix('v1')
         Route::post('/register', [\App\Http\Controllers\Api\V1\AuthController::class, 'register']);
 
         // ── Online Orders Sync & Confirmation (POS Push-to-Pull) ──
-        Route::get('/online-orders/stream',        [\App\Http\Controllers\Api\V1\OnlineOrderSyncController::class, 'stream']);
-        Route::get('/online-orders/pending',       [\App\Http\Controllers\Api\V1\OnlineOrderSyncController::class, 'pending']);
-        Route::get('/online-orders/{id}',          [\App\Http\Controllers\Api\V1\OnlineOrderSyncController::class, 'show']);
-        Route::post('/online-orders/{id}/confirm', [\App\Http\Controllers\Api\V1\OnlineOrderSyncController::class, 'confirm']);
+        Route::get('/online-orders/stream',          [\App\Http\Controllers\Api\V1\OnlineOrderSyncController::class, 'stream']);
+        Route::get('/online-orders/pending',         [\App\Http\Controllers\Api\V1\OnlineOrderSyncController::class, 'pending']);
+        Route::get('/online-orders/{id}',            [\App\Http\Controllers\Api\V1\OnlineOrderSyncController::class, 'show']);
+        Route::post('/online-orders/{id}/confirm',   [\App\Http\Controllers\Api\V1\OnlineOrderSyncController::class, 'confirm']);
+        Route::post('/online-orders/{id}/complete',  [\App\Http\Controllers\Api\V1\OnlineOrderSyncController::class, 'complete']);
 
 
         // ─────────────────────────────────────────────────────
@@ -85,9 +86,10 @@ Route::prefix('v1')
                 Route::get('/transactions/{id}/items',    [\App\Http\Controllers\Api\V1\TransactionController::class, 'items']);
 
                 // ── Online Orders Sync & Confirmation (POS) ──
-                Route::get('/online-orders/pending',      [\App\Http\Controllers\Api\V1\OnlineOrderSyncController::class, 'pending']);
-                Route::get('/online-orders/{id}',         [\App\Http\Controllers\Api\V1\OnlineOrderSyncController::class, 'show']);
-                Route::post('/online-orders/{id}/confirm',[\App\Http\Controllers\Api\V1\OnlineOrderSyncController::class, 'confirm']);
+                Route::get('/online-orders/pending',        [\App\Http\Controllers\Api\V1\OnlineOrderSyncController::class, 'pending']);
+                Route::get('/online-orders/{id}',           [\App\Http\Controllers\Api\V1\OnlineOrderSyncController::class, 'show']);
+                Route::post('/online-orders/{id}/confirm',  [\App\Http\Controllers\Api\V1\OnlineOrderSyncController::class, 'confirm']);
+                Route::post('/online-orders/{id}/complete', [\App\Http\Controllers\Api\V1\OnlineOrderSyncController::class, 'complete']);
 
                 // Cashier Sessions & Drawer Logs
                 Route::post('/cashier-sessions',          [\App\Http\Controllers\Api\V1\CashierSessionController::class, 'store']);
@@ -197,6 +199,7 @@ Route::prefix('v2')
             Route::get('/online-orders/pending',       [\App\Http\Controllers\Api\V2\OnlineOrderSyncController::class, 'pending']);
             Route::get('/online-orders/{id}',          [\App\Http\Controllers\Api\V2\OnlineOrderSyncController::class, 'show']);
             Route::post('/online-orders/{id}/confirm', [\App\Http\Controllers\Api\V2\OnlineOrderSyncController::class, 'confirm']);
+            Route::post('/online-orders/{id}/complete',[\App\Http\Controllers\Api\V2\OnlineOrderSyncController::class, 'complete']);
 
         }); // end auth:sanctum & tenant.resolver
     }); // end v2

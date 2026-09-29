@@ -10,7 +10,8 @@ class CashDrawerLogController extends Controller
 {
     public function store(Request $request)
     {
-        $tenantId = request()->attributes->get('tenant_id');
+        $tenant = app('tenant');
+        $tenantId = $tenant ? $tenant->id : request()->attributes->get('tenant_id');
 
         $validated = $request->validate([
             'employee_id' => 'nullable|exists:employees,id',

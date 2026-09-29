@@ -47,6 +47,7 @@ class ApiV2Test extends TestCase
         $activateResponse = $this->postJson('/api/v2/device/activate', [
             'email'        => 'owner@kilatz.id',
             'password'     => 'password123',
+            'outlet_id'    => $tenant->id,
             'device_id'    => 'hardware-pos-uuid-12345',
             'device_name'  => 'Kasir Utama',
             'device_model' => 'Samsung Tab A9',
