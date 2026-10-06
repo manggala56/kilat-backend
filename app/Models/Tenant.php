@@ -35,4 +35,42 @@ class Tenant extends Model
     {
         return $this->hasMany(Employee::class);
     }
+
+    public function googleDrive()
+    {
+        return $this->hasOne(TenantGoogleDrive::class);
+    }
+
+    protected static function booted(): void
+    {
+        static::creating(function (Tenant $tenant) {
+            if (empty($tenant->store_id)) {
+                $tenant->store_id = static::generateUniqueStoreSlug($tenant->business_name);
+            }
+        });
+    }
+
+    /**
+     * Generate unique, collision-free short slug hash for store identification
+     * e.g. "kopi-kenangan-a8f2"
+     */
+    public static function generateUniqueStoreSlug(string $name, ?int $ignoreId = null): string
+    {
+        $baseSlug = \Illuminate\Support\Str::slug($name);
+        if (empty($baseSlug)) {
+            $baseSlug = 'outlet';
+        }
+
+        // Generate 4-char short hash
+        $shortHash = strtolower(\Illuminate\Support\Str::random(4));
+        $slug = "{$baseSlug}-{$shortHash}";
+
+        // Ensure uniqueness across tenants
+        while (static::where('store_id', $slug)->when($ignoreId, fn($q) => $q->where('id', '!=', $ignoreId))->exists()) {
+            $shortHash = strtolower(\Illuminate\Support\Str::random(4));
+            $slug = "{$baseSlug}-{$shortHash}";
+        }
+
+        return $slug;
+    }
 }

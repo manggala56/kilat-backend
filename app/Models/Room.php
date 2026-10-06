@@ -14,7 +14,26 @@ class Room extends Model
         'type',
         'hourly_rate',
         'status',
+        'qr_token',
     ];
+
+    protected static function booted()
+    {
+        static::creating(function ($room) {
+            if (empty($room->qr_token)) {
+                $room->qr_token = static::generateUniqueQrToken();
+            }
+        });
+    }
+
+    public static function generateUniqueQrToken(): string
+    {
+        do {
+            $token = \Illuminate\Support\Str::lower(\Illuminate\Support\Str::random(10));
+        } while (static::where('qr_token', $token)->exists());
+
+        return $token;
+    }
 
     protected $casts = [
         'hourly_rate' => 'decimal:2',

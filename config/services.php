@@ -42,4 +42,14 @@ return [
         'database_url' => env('FIREBASE_DATABASE_URL'),
     ],
 
+    'google_drive' => [
+        'client_id' => env('GOOGLE_DRIVE_CLIENT_ID', env('GOOGLE_CLIENT_ID')),
+        'client_secret' => env('GOOGLE_DRIVE_CLIENT_SECRET', env('GOOGLE_CLIENT_SECRET')),
+        'redirect_uri' => env('GOOGLE_DRIVE_REDIRECT_URI', env('GOOGLE_REDIRECT_URI', env('APP_URL') . '/settings/google-drive/callback')),
+    ],
+
+    'order_web' => [
+        'url' => env('ORDER_WEB_URL', env('APP_URL')),
+    ],
+
 ];

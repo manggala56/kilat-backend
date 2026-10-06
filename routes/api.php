@@ -195,12 +195,20 @@ Route::prefix('v2')
             Route::get('/reports/daily',        [\App\Http\Controllers\Api\V2\ReportController::class, 'daily']);
             Route::get('/reports/top-products', [\App\Http\Controllers\Api\V2\ReportController::class, 'topProducts']);
 
-            // ── Online Orders ────────────────────────────────
-            Route::get('/online-orders/pending',       [\App\Http\Controllers\Api\V2\OnlineOrderSyncController::class, 'pending']);
-            Route::get('/online-orders/{id}',          [\App\Http\Controllers\Api\V2\OnlineOrderSyncController::class, 'show']);
-            Route::post('/online-orders/{id}/confirm', [\App\Http\Controllers\Api\V2\OnlineOrderSyncController::class, 'confirm']);
-            Route::post('/online-orders/{id}/complete',[\App\Http\Controllers\Api\V2\OnlineOrderSyncController::class, 'complete']);
+            // ── Online Orders Sync & Confirmation (POS) ──────
+            Route::get('/online-orders/pending',        [\App\Http\Controllers\Api\V2\OnlineOrderSyncController::class, 'pending']);
+            Route::get('/online-orders/{id}',           [\App\Http\Controllers\Api\V2\OnlineOrderSyncController::class, 'show']);
+            Route::post('/online-orders/{id}/confirm',  [\App\Http\Controllers\Api\V2\OnlineOrderSyncController::class, 'confirm']);
+            Route::post('/online-orders/{id}/complete', [\App\Http\Controllers\Api\V2\OnlineOrderSyncController::class, 'complete']);
 
         }); // end auth:sanctum & tenant.resolver
+
+        // ── Public Guest QR Menu & Online Ordering (No Auth, Rate-Limited) ──
+        Route::prefix('public')->group(function () {
+            Route::get('/menu/{storeId}',                  [\App\Http\Controllers\Api\V2\PublicOrderController::class, 'menu']);
+            Route::post('/order/{storeId}',                [\App\Http\Controllers\Api\V2\PublicOrderController::class, 'checkout'])->middleware('throttle:30,1');
+            Route::get('/order/{storeId}/{receiptNumber}', [\App\Http\Controllers\Api\V2\PublicOrderController::class, 'status']);
+        });
+
     }); // end v2
 

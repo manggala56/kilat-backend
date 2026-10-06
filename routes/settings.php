@@ -21,4 +21,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('user-password.update');
 
     Route::inertia('settings/appearance', 'settings/appearance')->name('appearance.edit');
+
+    // Google Drive Integration
+    Route::get('settings/google-drive', [\App\Http\Controllers\Settings\GoogleDriveController::class, 'show'])->name('settings.google-drive');
+    Route::get('settings/google-drive/auth', [\App\Http\Controllers\Settings\GoogleDriveController::class, 'redirect'])->name('settings.google-drive.auth');
+    Route::get('settings/google-drive/callback', [\App\Http\Controllers\Settings\GoogleDriveController::class, 'callback'])->name('settings.google-drive.callback');
+    Route::post('settings/google-drive/disconnect', [\App\Http\Controllers\Settings\GoogleDriveController::class, 'disconnect'])->name('settings.google-drive.disconnect');
 });

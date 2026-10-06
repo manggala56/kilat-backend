@@ -11,7 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { 
     Plus, Edit2, Trash2, Package, Search, ChevronDown, ChevronRight, 
     Layers, Sparkles, Tag, AlertCircle, Wand2, X, Eye, Globe, Star, 
-    Clock, Flame, CheckCircle2, Utensils, ShoppingBag, UploadCloud, ImageIcon
+    Clock, Flame, CheckCircle2, Utensils, ShoppingBag, UploadCloud, ImageIcon,
+    Calculator, BookOpen, Percent, TrendingUp
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
@@ -29,6 +30,8 @@ interface ProductForm {
     name: string;
     category_id: string;
     sku: string;
+    cost_price: string;
+    recipe_hpp?: number;
     price: string;
     stock: string;
     margin_percentage: string;
@@ -59,6 +62,8 @@ const emptyForm: ProductForm = {
     name: '',
     category_id: '',
     sku: '',
+    cost_price: '',
+    recipe_hpp: 0,
     price: '',
     stock: '0',
     margin_percentage: '',
@@ -243,6 +248,71 @@ export default function ProductsIndex({ products, categories, filters }: any) {
         });
     };
 
+    const handleHppChange = (val: string) => {
+        const hppNum = parseFloat(val) || 0;
+        const marginNum = parseFloat(form.margin_percentage) || 0;
+        
+        let newPrice = form.price;
+        if (marginNum > 0 && hppNum > 0) {
+            const rawPrice = hppNum + (hppNum * (marginNum / 100));
+            newPrice = Math.round(rawPrice).toString();
+        }
+        
+        setForm(prev => ({
+            ...prev,
+            cost_price: val,
+            price: newPrice,
+        }));
+    };
+
+    const handleMarginChange = (val: string) => {
+        const marginNum = parseFloat(val) || 0;
+        const hppNum = parseFloat(form.cost_price) || 0;
+        
+        let newPrice = form.price;
+        if (marginNum > 0 && hppNum > 0) {
+            const rawPrice = hppNum + (hppNum * (marginNum / 100));
+            newPrice = Math.round(rawPrice).toString();
+        }
+        
+        setForm(prev => ({
+            ...prev,
+            margin_percentage: val,
+            price: newPrice,
+        }));
+    };
+
+    const applyPresetMargin = (pct: number) => {
+        handleMarginChange(pct.toString());
+    };
+
+    const useRecipeHpp = () => {
+        if (form.recipe_hpp && form.recipe_hpp > 0) {
+            handleHppChange(form.recipe_hpp.toString());
+            toast.success(`HPP dari Buku Resep (${formatRupiah(form.recipe_hpp)}) berhasil diterapkan!`);
+        }
+    };
+
+    const applyRounding = (roundUnit: number) => {
+        const currentPrice = parseFloat(form.price) || 0;
+        if (currentPrice <= 0) return;
+        
+        let roundedPrice = currentPrice;
+        if (roundUnit === 100) {
+            roundedPrice = Math.ceil(currentPrice / 100) * 100;
+        } else if (roundUnit === 500) {
+            roundedPrice = Math.ceil(currentPrice / 500) * 500;
+        } else if (roundUnit === 1000) {
+            roundedPrice = Math.ceil(currentPrice / 1000) * 1000;
+        }
+
+        setForm(prev => ({
+            ...prev,
+            price: roundedPrice.toString(),
+        }));
+        toast.info(`Harga dibulatkan ke ${formatRupiah(roundedPrice)}`);
+    };
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
 
@@ -250,6 +320,7 @@ export default function ProductsIndex({ products, categories, filters }: any) {
             name: form.name,
             category_id: form.category_id,
             sku: form.sku,
+            cost_price: form.cost_price,
             price: form.price,
             stock: form.stock,
             margin_percentage: form.margin_percentage,
@@ -314,10 +385,14 @@ export default function ProductsIndex({ products, categories, filters }: any) {
             stock: v.stock?.toString() || '0',
         }));
 
+        const recipeHpp = Number(prod.recipe_hpp) || (Array.isArray(prod.recipe_items) ? prod.recipe_items.reduce((acc: number, item: any) => acc + ((Number(item.quantity) || 0) * (Number(item.raw_material?.cost_per_unit) || 0)), 0) : 0);
+
         setForm({ 
             name: prod.name, 
             category_id: prod.category_id?.toString() || '', 
             sku: prod.sku || '', 
+            cost_price: prod.cost_price ? prod.cost_price.toString() : (recipeHpp > 0 ? recipeHpp.toString() : ''),
+            recipe_hpp: recipeHpp,
             price: prod.price?.toString() || '', 
             stock: prod.stock?.toString() || '0',
             margin_percentage: prod.margin_percentage?.toString() || '',
@@ -409,9 +484,9 @@ export default function ProductsIndex({ products, categories, filters }: any) {
                                     <Plus className="mr-2 h-4 w-4" /> Tambah Produk
                                 </Button>
                             </DialogTrigger>
-                            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                            <DialogContent className="max-w-5xl xl:max-w-6xl w-[95vw] max-h-[92vh] overflow-y-auto p-6 md:p-8">
                                 <DialogHeader>
-                                    <DialogTitle className="text-xl flex items-center gap-2">
+                                    <DialogTitle className="text-xl sm:text-2xl flex items-center gap-2">
                                         {isEdit ? <Edit2 className="h-5 w-5 text-[#FEB400]" /> : <Plus className="h-5 w-5 text-[#FEB400]" />}
                                         {isEdit ? 'Edit Produk & Menu Online' : 'Tambah Produk Baru (F&B & Online Order)'}
                                     </DialogTitle>
@@ -536,26 +611,135 @@ export default function ProductsIndex({ products, categories, filters }: any) {
                                                 />
                                             </div>
 
-                                            <div className="space-y-2">
-                                                <Label>Harga Jual Dasar (Rp) <span className="text-red-500">*</span></Label>
-                                                <Input 
-                                                    type="number" 
-                                                    required
-                                                    placeholder="Contoh: 18000" 
-                                                    value={form.price} 
-                                                    onChange={(e) => setForm({ ...form, price: e.target.value })} 
-                                                />
-                                            </div>
+                                            {/* Smart Pricing & Cost Calculator Box */}
+                                            <div className="md:col-span-2 p-4 rounded-xl bg-gradient-to-br from-amber-500/5 via-primary/5 to-muted/30 border border-primary/20 space-y-4">
+                                                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-primary/10 pb-2.5">
+                                                    <div className="flex items-center gap-2">
+                                                        <Calculator className="h-4 w-4 text-[#FEB400]" />
+                                                        <h5 className="text-xs font-bold uppercase tracking-wider text-foreground">
+                                                            Kalkulator Harga & Estimasi Profit (HPP & Margin)
+                                                        </h5>
+                                                    </div>
+                                                    {form.recipe_hpp && form.recipe_hpp > 0 ? (
+                                                        <Button
+                                                            type="button"
+                                                            variant="outline"
+                                                            size="sm"
+                                                            onClick={useRecipeHpp}
+                                                            className="h-7 text-xs bg-amber-500/10 border-amber-500/30 text-amber-700 dark:text-amber-300 hover:bg-amber-500/20 gap-1.5"
+                                                        >
+                                                            <BookOpen className="h-3.5 w-3.5" />
+                                                            Gunakan HPP Resep: {formatRupiah(form.recipe_hpp)}
+                                                        </Button>
+                                                    ) : null}
+                                                </div>
 
-                                            <div className="space-y-2">
-                                                <Label>Margin Target (%) <span className="text-xs text-muted-foreground font-normal">(Opsional)</span></Label>
-                                                <Input 
-                                                    type="number" 
-                                                    step="0.01" 
-                                                    placeholder="Contoh: 30" 
-                                                    value={form.margin_percentage} 
-                                                    onChange={(e) => setForm({ ...form, margin_percentage: e.target.value })} 
-                                                />
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                                    {/* HPP (Modal Pokok) */}
+                                                    <div className="space-y-1.5">
+                                                        <div className="flex items-center justify-between">
+                                                            <Label className="text-xs font-semibold">HPP / Modal (Rp)</Label>
+                                                            <span className="text-[10px] text-muted-foreground">(Bisa dikosongi)</span>
+                                                        </div>
+                                                        <Input
+                                                            type="number"
+                                                            placeholder="Contoh: 10000"
+                                                            value={form.cost_price}
+                                                            onChange={(e) => handleHppChange(e.target.value)}
+                                                            className="h-9 text-sm"
+                                                        />
+                                                    </div>
+
+                                                    {/* Margin (%) */}
+                                                    <div className="space-y-1.5">
+                                                        <div className="flex items-center justify-between">
+                                                            <Label className="text-xs font-semibold">Target Margin (%)</Label>
+                                                            <span className="text-[10px] text-muted-foreground">(Opsional)</span>
+                                                        </div>
+                                                        <Input
+                                                            type="number"
+                                                            step="0.01"
+                                                            placeholder="Contoh: 30"
+                                                            value={form.margin_percentage}
+                                                            onChange={(e) => handleMarginChange(e.target.value)}
+                                                            className="h-9 text-sm"
+                                                        />
+                                                        {/* Quick Margin Presets */}
+                                                        <div className="flex flex-wrap gap-1 pt-1">
+                                                            {[10, 20, 30, 50, 100].map((pct) => (
+                                                                <button
+                                                                    key={pct}
+                                                                    type="button"
+                                                                    onClick={() => applyPresetMargin(pct)}
+                                                                    className={`text-[10px] px-1.5 py-0.5 rounded font-medium transition-colors ${
+                                                                        form.margin_percentage === pct.toString()
+                                                                            ? 'bg-[#FEB400] text-black font-bold'
+                                                                            : 'bg-muted hover:bg-muted-foreground/20 text-muted-foreground'
+                                                                    }`}
+                                                                >
+                                                                    +{pct}%
+                                                                </button>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Harga Jual Dasar [Wajib] */}
+                                                    <div className="space-y-1.5 sm:col-span-2 lg:col-span-1">
+                                                        <div className="flex items-center justify-between">
+                                                            <Label className="text-xs font-bold text-primary flex items-center gap-1">
+                                                                Harga Jual (Rp) <span className="text-red-500">*</span>
+                                                            </Label>
+                                                            {/* Live Profit Preview */}
+                                                            {parseFloat(form.price) > 0 && parseFloat(form.cost_price) > 0 && (
+                                                                <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
+                                                                    Profit: {formatRupiah(parseFloat(form.price) - parseFloat(form.cost_price))} (
+                                                                    {Math.round(((parseFloat(form.price) - parseFloat(form.cost_price)) / parseFloat(form.cost_price)) * 100)}%)
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        <Input
+                                                            type="number"
+                                                            required
+                                                            placeholder="Contoh: 18000"
+                                                            value={form.price}
+                                                            onChange={(e) => setForm({ ...form, price: e.target.value })}
+                                                            className="h-9 text-sm font-bold border-primary/40 focus-visible:ring-primary"
+                                                        />
+
+                                                        {/* Smart Rounding / Normalisasi Harga */}
+                                                        {parseFloat(form.price) > 0 && (
+                                                            <div className="flex items-center gap-1 pt-1 flex-wrap">
+                                                                <span className="text-[10px] text-muted-foreground flex items-center gap-0.5">
+                                                                    <TrendingUp className="h-3 w-3" /> Normalisasi:
+                                                                </span>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => applyRounding(100)}
+                                                                    className="text-[10px] px-1.5 py-0.5 rounded bg-muted hover:bg-primary/20 text-foreground border border-border"
+                                                                    title="Bulatkan ke kelipatan 100 ke atas"
+                                                                >
+                                                                    +100
+                                                                </button>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => applyRounding(500)}
+                                                                    className="text-[10px] px-1.5 py-0.5 rounded bg-muted hover:bg-primary/20 text-foreground border border-border"
+                                                                    title="Bulatkan ke kelipatan 500 ke atas"
+                                                                >
+                                                                    +500
+                                                                </button>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => applyRounding(1000)}
+                                                                    className="text-[10px] px-1.5 py-0.5 rounded bg-muted hover:bg-primary/20 text-foreground border border-border"
+                                                                    title="Bulatkan ke kelipatan 1.000 ke atas"
+                                                                >
+                                                                    +1.000
+                                                                </button>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
                                             </div>
 
                                             {!form.has_variants && (
@@ -992,9 +1176,14 @@ export default function ProductsIndex({ products, categories, filters }: any) {
                                                     </div>
                                                 </TableCell>
                                                 <TableCell className="text-right font-semibold">
-                                                    {formatRupiah(prod.price)}
-                                                    {prod.margin_percentage && (
+                                                    <div>{formatRupiah(prod.price)}</div>
+                                                    {(parseFloat(prod.cost_price) > 0 || parseFloat(prod.recipe_hpp) > 0) && (
                                                         <span className="block text-[10px] text-muted-foreground font-normal">
+                                                            HPP: {formatRupiah(parseFloat(prod.cost_price) > 0 ? prod.cost_price : prod.recipe_hpp)}
+                                                        </span>
+                                                    )}
+                                                    {prod.margin_percentage && (
+                                                        <span className="block text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">
                                                             Margin: {prod.margin_percentage}%
                                                         </span>
                                                     )}

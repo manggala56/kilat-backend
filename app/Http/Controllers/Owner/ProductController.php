@@ -15,7 +15,7 @@ class ProductController extends Controller
     {
         $tenant = $request->user()->tenant ?? abort(403);
 
-        $products = Product::with('category:id,name', 'variants')
+        $products = Product::with(['category:id,name', 'variants', 'recipeItems.rawMaterial'])
             ->where('tenant_id', $tenant->id)
             ->where('is_active', true)
             ->when($request->search, fn ($q) => $q->where('name', 'like', "%{$request->search}%")
@@ -45,6 +45,7 @@ class ProductController extends Controller
             'category_id' => 'nullable|integer|exists:categories,id',
             'sku' => 'nullable|string|unique:products,sku',
             'description' => 'nullable|string',
+            'cost_price' => 'nullable|numeric|min:0',
             'price' => 'nullable|numeric|min:0',
             'margin_percentage' => 'nullable|numeric|min:0',
             'stock' => 'nullable|integer|min:0',
@@ -65,7 +66,7 @@ class ProductController extends Controller
 
         $imagePath = null;
         if ($request->hasFile('image')) {
-            $imagePath = $request->file('image')->store("tenants/{$tenant->id}/products", 'public');
+            $imagePath = app(\App\Services\GoogleDriveStorageService::class)->uploadProductPhoto($tenant, $request->file('image'));
         }
 
         $hasVariants = $request->boolean('has_variants') && !empty($validated['variants']);
@@ -76,10 +77,27 @@ class ProductController extends Controller
             $totalStock = collect($validated['variants'])->sum(fn($v) => (int)($v['stock'] ?? 0));
         }
 
+        // Prioritas Harga:
+        // 1. Jika ada input harga manual ('price' terisi dan tidak kosong), gunakan harga jual manual tersebut
+        // 2. Jika tidak ada harga manual tapi ada margin_percentage dan cost_price, kalkulasikan
+        // 3. Default fallback ke 0
+        $finalPrice = 0;
+        if ($request->filled('price')) {
+            $finalPrice = (float) $request->input('price');
+        } elseif ($request->filled('margin_percentage') && $request->filled('cost_price')) {
+            $hpp = (float) $request->input('cost_price');
+            $margin = (float) $request->input('margin_percentage');
+            $finalPrice = $hpp + ($hpp * ($margin / 100));
+        } elseif (isset($validated['price']) && $validated['price'] !== null) {
+            $finalPrice = (float) $validated['price'];
+        }
+
         $productData = [
             ...$validated,
             'tenant_id' => $tenant->id,
             'sku' => $productSku,
+            'cost_price' => (float) ($validated['cost_price'] ?? 0),
+            'price' => $finalPrice,
             'image' => $imagePath,
             'stock' => $totalStock,
             'has_variants' => $hasVariants,
@@ -88,15 +106,6 @@ class ProductController extends Controller
             'prep_time_minutes' => $validated['prep_time_minutes'] ?? 10,
             'tags' => $validated['tags'] ?? [],
         ];
-
-        // Hitung harga dari margin persentase jika ada (catatan: produk baru belum punya resep)
-        $marginPercentage = $request->input('margin_percentage');
-        if ($marginPercentage !== null && $marginPercentage !== '') {
-            $hpp = 0; // Karena produk baru belum punya recipeItems
-            $productData['price'] = $hpp + ($hpp * ($marginPercentage / 100));
-        } elseif (!isset($productData['price'])) {
-            $productData['price'] = 0;
-        }
 
         $product = Product::create($productData);
 
@@ -129,6 +138,7 @@ class ProductController extends Controller
             'category_id' => 'nullable|integer|exists:categories,id',
             'sku' => 'nullable|string|unique:products,sku,' . $product->id,
             'description' => 'nullable|string',
+            'cost_price' => 'sometimes|nullable|numeric|min:0',
             'price' => 'sometimes|nullable|numeric|min:0',
             'margin_percentage' => 'nullable|numeric|min:0',
             'stock' => 'sometimes|nullable|integer|min:0',
@@ -150,7 +160,7 @@ class ProductController extends Controller
         ]);
 
         if ($request->hasFile('image')) {
-            $validated['image'] = $request->file('image')->store("tenants/{$tenant->id}/products", 'public');
+            $validated['image'] = app(\App\Services\GoogleDriveStorageService::class)->uploadProductPhoto($tenant, $request->file('image'));
         } else {
             unset($validated['image']);
         }
@@ -168,10 +178,16 @@ class ProductController extends Controller
             $validated['is_active'] = $request->boolean('is_active');
         }
 
-        $marginPercentage = $request->input('margin_percentage');
-        if ($marginPercentage !== null && $marginPercentage !== '') {
-            $hpp = $product->hpp ?? 0;
-            $validated['price'] = $hpp + ($hpp * ($marginPercentage / 100));
+        // Prioritas Harga Update:
+        // Jika owner menginput harga langsung di kolom 'price', prioritaskan harga tersebut.
+        if ($request->filled('price')) {
+            $validated['price'] = (float) $request->input('price');
+        } elseif ($request->filled('margin_percentage')) {
+            $hpp = (float) ($request->input('cost_price', $product->hpp) ?? 0);
+            if ($hpp > 0) {
+                $margin = (float) $request->input('margin_percentage');
+                $validated['price'] = $hpp + ($hpp * ($margin / 100));
+            }
         }
 
         if (isset($validated['sku'])) {

@@ -7,10 +7,16 @@ Route::inertia('/', 'welcome', [
     'canRegister' => Features::enabled(Features::registration()),
 ])->name('home');
 
-// --- Public Online Ordering (Guest QR Menu) ---
-Route::get('/order/{storeId}', [\App\Http\Controllers\PublicOrderController::class, 'show'])->name('order.show');
-Route::post('/order/{storeId}/checkout', [\App\Http\Controllers\PublicOrderController::class, 'checkout'])->name('order.checkout');
-Route::get('/order/{storeId}/status/{receiptNumber}', [\App\Http\Controllers\PublicOrderController::class, 'track'])->name('order.status');
+// --- Public Online Ordering: Redirect to Standalone Order Web ---
+Route::get('/order/{storeId}', function (\Illuminate\Http\Request $request, string $storeId) {
+    $orderWebUrl = config('services.order_web.url', env('APP_URL'));
+    $queryString = $request->getQueryString() ? '?' . $request->getQueryString() : '';
+    if (!str_contains($queryString, 'store=')) {
+        $queryString = ($queryString ? $queryString . '&' : '?') . 'store=' . urlencode($storeId);
+    }
+    return redirect()->away(rtrim($orderWebUrl, '/') . '/' . $queryString);
+})->name('order.show');
+
 
 Route::middleware(['auth', 'verified', 'role:owner'])->group(function () {
     Route::get('dashboard', [\App\Http\Controllers\Owner\DashboardController::class, 'index'])->name('dashboard');
