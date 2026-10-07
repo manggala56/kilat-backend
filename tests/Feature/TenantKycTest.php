@@ -268,4 +268,52 @@ class TenantKycTest extends TestCase
             'status'         => 'pending',
         ]);
     }
+
+    public function test_settings_kyc_edit_and_update_page()
+    {
+        $owner = User::create([
+            'name'              => 'Owner Settings Test',
+            'username'          => 'owner_setting_' . rand(1000, 9999),
+            'email'             => 'owner_setting_' . rand(1000, 9999) . '@example.com',
+            'password'          => bcrypt('password'),
+            'role'              => 'owner',
+            'email_verified_at' => now(),
+        ]);
+
+        $tenant = Tenant::create([
+            'owner_id'      => $owner->id,
+            'business_name' => 'Kedai Settings',
+            'store_id'      => 'kedai-settings-1234',
+        ]);
+
+        $this->actingAs($owner);
+
+        // 1. GET settings/kyc
+        $res = $this->get('/settings/kyc');
+        $res->assertStatus(200);
+
+        // 2. POST settings/kyc
+        $ktpFile = UploadedFile::fake()->image('ktp.jpg');
+        $businessFile = UploadedFile::fake()->image('business.jpg');
+
+        $submitRes = $this->post('/settings/kyc', [
+            'tenant_id'                => $tenant->id,
+            'id_card_number'           => '3301012345678901',
+            'id_card_name'             => 'Doni',
+            'id_card_photo'            => $ktpFile,
+            'bank_name'                => 'BCA',
+            'bank_account_number'      => '5544332211',
+            'bank_account_holder_name' => 'Doni',
+            'business_photo'           => $businessFile,
+            'business_type'            => 'Cafe & Resto',
+        ]);
+
+        $submitRes->assertRedirect();
+        $this->assertDatabaseHas('tenant_kycs', [
+            'tenant_id'      => $tenant->id,
+            'id_card_number' => '3301012345678901',
+            'bank_name'      => 'BCA',
+            'status'         => 'pending',
+        ]);
+    }
 }

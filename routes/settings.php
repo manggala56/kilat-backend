@@ -31,4 +31,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // DOKU Payment Gateway Settings
     Route::get('settings/payment', [\App\Http\Controllers\Settings\PaymentSettingController::class, 'edit'])->name('settings.payment.edit');
     Route::patch('settings/payment', [\App\Http\Controllers\Settings\PaymentSettingController::class, 'update'])->name('settings.payment.update');
+
+    // KYC & QRIS Verification Settings
+    Route::get('settings/kyc', [\App\Http\Controllers\Settings\KycSettingController::class, 'edit'])->name('settings.kyc.edit');
+    Route::post('settings/kyc', [\App\Http\Controllers\Settings\KycSettingController::class, 'update'])->name('settings.kyc.update');
 });
