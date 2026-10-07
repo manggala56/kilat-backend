@@ -17,7 +17,7 @@ class CashierSessionController extends Controller
         $tenant = app('tenant');
 
         $validated = $request->validate([
-            'cashier_id' => 'required|integer|exists:users,id',
+            'cashier_id' => 'required|integer|exists:employees,id',
             'clock_in_time' => 'required|date',
             'clock_out_time' => 'nullable|date',
             'starting_cash' => 'nullable|numeric',
@@ -34,13 +34,13 @@ class CashierSessionController extends Controller
             'tenant_id' => $tenant->id,
             'cashier_id' => $validated['cashier_id'],
             'clock_in_time' => $validated['clock_in_time'],
-            'clock_out_time' => $validated['clock_out_time'],
+            'clock_out_time' => $validated['clock_out_time'] ?? null,
             'starting_cash' => $validated['starting_cash'] ?? 0,
-            'system_recorded_cash' => $validated['system_recorded_cash'],
-            'actual_cash_input' => $validated['actual_cash_input'],
-            'discrepancy' => $validated['discrepancy'],
+            'system_recorded_cash' => $validated['system_recorded_cash'] ?? null,
+            'actual_cash_input' => $validated['actual_cash_input'] ?? null,
+            'discrepancy' => $validated['discrepancy'] ?? null,
             'total_transactions' => $validated['total_transactions'] ?? 0,
-            'notes' => $validated['notes'],
+            'notes' => $validated['notes'] ?? null,
         ]);
 
         return response()->json([

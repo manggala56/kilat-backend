@@ -24,8 +24,21 @@ class RoomController extends Controller
             ->paginate(20)
             ->withQueryString();
 
+        $allRooms = Room::where('tenant_id', $tenant->id)
+            ->orderBy('name')
+            ->get(['id', 'name', 'type', 'status', 'hourly_rate', 'qr_token']);
+
+        $orderWebUrl = config('services.order_web.url', env('APP_URL'));
+
         return Inertia::render('Owner/Rooms/Index', [
             'rooms' => $rooms,
+            'all_rooms' => $allRooms,
+            'tenant' => [
+                'id' => $tenant->id,
+                'store_id' => $tenant->store_id,
+                'business_name' => $tenant->business_name,
+            ],
+            'order_web_url' => $orderWebUrl,
             'filters' => $request->only('search'),
         ]);
     }

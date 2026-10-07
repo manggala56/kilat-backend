@@ -11,12 +11,15 @@ const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 createInertiaApp({
     title: (title) => (title ? `${title} - ${appName}` : appName),
     layout: (name) => {
+        const normalized = name.toLowerCase();
         switch (true) {
-            case name === 'welcome':
+            case normalized === 'welcome':
+            case normalized === 'error':
+            case normalized.startsWith('order/'):
                 return null;
-            case name.startsWith('auth/'):
+            case normalized.startsWith('auth/'):
                 return AuthLayout;
-            case name.startsWith('settings/'):
+            case normalized.startsWith('settings/'):
                 return [AppLayout, SettingsLayout];
             default:
                 return AppLayout;

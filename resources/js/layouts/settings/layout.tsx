@@ -26,6 +26,16 @@ const sidebarNavItems: NavItem[] = [
         href: editAppearance(),
         icon: null,
     },
+    {
+        title: 'Google Drive',
+        href: '/settings/google-drive',
+        icon: null,
+    },
+    {
+        title: 'Verifikasi KYC & QRIS',
+        href: '/settings/kyc',
+        icon: null,
+    },
 ];
 
 export default function SettingsLayout({ children }: PropsWithChildren) {

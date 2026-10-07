@@ -13,7 +13,7 @@ class Transaction extends Model
         'subtotal', 'discount_amount', 'tax_amount', 'total_amount',
         'amount_paid', 'change_amount', 'payment_method',
         'status', 'notes', 'is_offline_sync', 'transacted_at',
-        'customer_name', 'table_number',
+        'customer_name', 'customer_phone', 'table_number', 'order_type', 'payment_status',
     ];
 
     protected $casts = [
@@ -45,6 +45,16 @@ class Transaction extends Model
     public function items(): HasMany
     {
         return $this->hasMany(TransactionItem::class);
+    }
+
+    public function paymentTransactions(): HasMany
+    {
+        return $this->hasMany(PaymentTransaction::class);
+    }
+
+    public function latestPaymentTransaction()
+    {
+        return $this->hasOne(PaymentTransaction::class)->latestOfMany();
     }
 
     public function scopeForTenant($query, $tenantId)

@@ -7,6 +7,17 @@ Route::inertia('/', 'welcome', [
     'canRegister' => Features::enabled(Features::registration()),
 ])->name('home');
 
+// --- Public Online Ordering: Redirect to Standalone Order Web ---
+Route::get('/order/{storeId}', function (\Illuminate\Http\Request $request, string $storeId) {
+    $orderWebUrl = config('services.order_web.url', env('APP_URL'));
+    $queryString = $request->getQueryString() ? '?' . $request->getQueryString() : '';
+    if (!str_contains($queryString, 'store=')) {
+        $queryString = ($queryString ? $queryString . '&' : '?') . 'store=' . urlencode($storeId);
+    }
+    return redirect()->away(rtrim($orderWebUrl, '/') . '/' . $queryString);
+})->name('order.show');
+
+
 Route::middleware(['auth', 'verified', 'role:owner'])->group(function () {
     Route::get('dashboard', [\App\Http\Controllers\Owner\DashboardController::class, 'index'])->name('dashboard');
 
@@ -31,6 +42,8 @@ Route::middleware(['auth', 'verified', 'role:owner'])->group(function () {
         // --- Modul 3: Transactions ---
         Route::get('/transactions', [\App\Http\Controllers\Owner\TransactionController::class, 'index'])->name('transactions.index');
         Route::get('/transactions/{transaction}', [\App\Http\Controllers\Owner\TransactionController::class, 'show'])->name('transactions.show');
+        Route::post('/transactions/{transaction}/confirm-online', [\App\Http\Controllers\Owner\TransactionController::class, 'confirmOnlineOrder'])->name('transactions.confirm-online');
+        Route::get('/online-orders/{id}', [\App\Http\Controllers\Api\V1\OnlineOrderSyncController::class, 'show'])->name('online-orders.show');
 
         // --- Modul 4: Reports ---
         Route::get('/reports', [\App\Http\Controllers\Owner\ReportController::class, 'index'])->name('reports.index');
@@ -69,6 +82,16 @@ Route::middleware(['auth', 'verified', 'role:owner'])->group(function () {
         Route::post('outlets', [\App\Http\Controllers\Owner\OutletController::class, 'store'])->name('outlets.store');
         Route::put('outlets/{tenant}', [\App\Http\Controllers\Owner\OutletController::class, 'update'])->name('outlets.update');
         Route::delete('outlets/{tenant}', [\App\Http\Controllers\Owner\OutletController::class, 'destroy'])->name('outlets.destroy');
+        Route::delete('devices/{device}/revoke', [\App\Http\Controllers\Owner\OutletController::class, 'revokeDevice'])->name('devices.revoke');
+
+        // Konfigurasi Payment Gateway & Fee Komisi per Outlet
+        Route::get('outlets/{tenant}/payment-config', [\App\Http\Controllers\Owner\TenantPaymentSettingController::class, 'edit'])->name('outlets.payment-config.edit');
+        Route::put('outlets/{tenant}/payment-config', [\App\Http\Controllers\Owner\TenantPaymentSettingController::class, 'update'])->name('outlets.payment-config.update');
+        Route::post('payment-config/simulate', [\App\Http\Controllers\Owner\TenantPaymentSettingController::class, 'simulate'])->name('payment-config.simulate');
+
+        // Verifikasi KYC QRIS Dinamis
+        Route::get('kyc', [\App\Http\Controllers\Owner\TenantKycController::class, 'index'])->name('kyc.index');
+        Route::post('kyc', [\App\Http\Controllers\Owner\TenantKycController::class, 'store'])->name('kyc.store');
     });
 });
 

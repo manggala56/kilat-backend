@@ -35,4 +35,21 @@ return [
         ],
     ],
 
+    'firebase' => [
+        'project_id' => env('FIREBASE_PROJECT_ID'),
+        'server_key' => env('FIREBASE_SERVER_KEY'),
+        'credentials_path' => env('FIREBASE_CREDENTIALS_PATH'),
+        'database_url' => env('FIREBASE_DATABASE_URL'),
+    ],
+
+    'google_drive' => [
+        'client_id' => env('GOOGLE_DRIVE_CLIENT_ID', env('GOOGLE_CLIENT_ID')),
+        'client_secret' => env('GOOGLE_DRIVE_CLIENT_SECRET', env('GOOGLE_CLIENT_SECRET')),
+        'redirect_uri' => env('GOOGLE_DRIVE_REDIRECT_URI', env('GOOGLE_REDIRECT_URI', env('APP_URL') . '/settings/google-drive/callback')),
+    ],
+
+    'order_web' => [
+        'url' => env('ORDER_WEB_URL', env('APP_URL')),
+    ],
+
 ];
