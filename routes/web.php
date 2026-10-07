@@ -83,6 +83,15 @@ Route::middleware(['auth', 'verified', 'role:owner'])->group(function () {
         Route::put('outlets/{tenant}', [\App\Http\Controllers\Owner\OutletController::class, 'update'])->name('outlets.update');
         Route::delete('outlets/{tenant}', [\App\Http\Controllers\Owner\OutletController::class, 'destroy'])->name('outlets.destroy');
         Route::delete('devices/{device}/revoke', [\App\Http\Controllers\Owner\OutletController::class, 'revokeDevice'])->name('devices.revoke');
+
+        // Konfigurasi Payment Gateway & Fee Komisi per Outlet
+        Route::get('outlets/{tenant}/payment-config', [\App\Http\Controllers\Owner\TenantPaymentSettingController::class, 'edit'])->name('outlets.payment-config.edit');
+        Route::put('outlets/{tenant}/payment-config', [\App\Http\Controllers\Owner\TenantPaymentSettingController::class, 'update'])->name('outlets.payment-config.update');
+        Route::post('payment-config/simulate', [\App\Http\Controllers\Owner\TenantPaymentSettingController::class, 'simulate'])->name('payment-config.simulate');
+
+        // Verifikasi KYC QRIS Dinamis
+        Route::get('kyc', [\App\Http\Controllers\Owner\TenantKycController::class, 'index'])->name('kyc.index');
+        Route::post('kyc', [\App\Http\Controllers\Owner\TenantKycController::class, 'store'])->name('kyc.store');
     });
 });
 

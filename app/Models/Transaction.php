@@ -47,6 +47,16 @@ class Transaction extends Model
         return $this->hasMany(TransactionItem::class);
     }
 
+    public function paymentTransactions(): HasMany
+    {
+        return $this->hasMany(PaymentTransaction::class);
+    }
+
+    public function latestPaymentTransaction()
+    {
+        return $this->hasOne(PaymentTransaction::class)->latestOfMany();
+    }
+
     public function scopeForTenant($query, $tenantId)
     {
         return $query->where('tenant_id', $tenantId);

@@ -41,6 +41,21 @@ class Tenant extends Model
         return $this->hasOne(TenantGoogleDrive::class);
     }
 
+    public function paymentConfig()
+    {
+        return $this->hasOne(TenantPaymentConfig::class);
+    }
+
+    public function kyc()
+    {
+        return $this->hasOne(TenantKyc::class);
+    }
+
+    public function getIsQrisApprovedAttribute(): bool
+    {
+        return $this->kyc?->status === 'approved';
+    }
+
     protected static function booted(): void
     {
         static::creating(function (Tenant $tenant) {

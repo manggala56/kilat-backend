@@ -35,8 +35,8 @@ Route::prefix('v1')
         Route::get('/online-orders/stream',          [\App\Http\Controllers\Api\V1\OnlineOrderSyncController::class, 'stream']);
         Route::get('/online-orders/pending',         [\App\Http\Controllers\Api\V1\OnlineOrderSyncController::class, 'pending']);
         Route::get('/online-orders/{id}',            [\App\Http\Controllers\Api\V1\OnlineOrderSyncController::class, 'show']);
-        Route::post('/online-orders/{id}/confirm',   [\App\Http\Controllers\Api\V1\OnlineOrderSyncController::class, 'confirm']);
-        Route::post('/online-orders/{id}/complete',  [\App\Http\Controllers\Api\V1\OnlineOrderSyncController::class, 'complete']);
+        // ── DOKU Payment Gateway Webhook Notification ──
+        Route::post('/payments/doku/notifications', [\App\Http\Controllers\Api\V1\DokuNotificationController::class, 'handleNotification']);
 
 
         // ─────────────────────────────────────────────────────
@@ -84,6 +84,9 @@ Route::prefix('v1')
                 Route::post('/transactions/{invoice}/cancel-item', [\App\Http\Controllers\Api\V1\TransactionController::class, 'cancelItem']);
                 Route::get('/transactions',               [\App\Http\Controllers\Api\V1\TransactionController::class, 'index']);
                 Route::get('/transactions/{id}/items',    [\App\Http\Controllers\Api\V1\TransactionController::class, 'items']);
+                Route::post('/pos/orders/{order_id}/pay-qris', [\App\Http\Controllers\Api\V1\PosPaymentController::class, 'generateQris']);
+                Route::get('/pos/tenant/kyc-status',       [\App\Http\Controllers\Api\V1\PosKycController::class, 'status']);
+                Route::post('/pos/tenant/kyc-submit',      [\App\Http\Controllers\Api\V1\PosKycController::class, 'submit']);
 
                 // ── Online Orders Sync & Confirmation (POS) ──
                 Route::get('/online-orders/pending',        [\App\Http\Controllers\Api\V1\OnlineOrderSyncController::class, 'pending']);
@@ -171,6 +174,9 @@ Route::prefix('v2')
             Route::post('/transactions',                      [\App\Http\Controllers\Api\V2\TransactionController::class, 'store']);
             Route::get('/transactions',                       [\App\Http\Controllers\Api\V2\TransactionController::class, 'index']);
             Route::post('/transactions/{invoice}/cancel-item', [\App\Http\Controllers\Api\V2\TransactionController::class, 'cancelItem']);
+            Route::post('/pos/orders/{order_id}/pay-qris',     [\App\Http\Controllers\Api\V1\PosPaymentController::class, 'generateQris']);
+            Route::get('/pos/tenant/kyc-status',               [\App\Http\Controllers\Api\V1\PosKycController::class, 'status']);
+            Route::post('/pos/tenant/kyc-submit',              [\App\Http\Controllers\Api\V1\PosKycController::class, 'submit']);
 
             // ── Master Data & Catalog ────────────────────────
             Route::get('/products',   [\App\Http\Controllers\Api\V2\ProductController::class, 'index']);
@@ -205,9 +211,10 @@ Route::prefix('v2')
 
         // ── Public Guest QR Menu & Online Ordering (No Auth, Rate-Limited) ──
         Route::prefix('public')->group(function () {
-            Route::get('/menu/{storeId}',                  [\App\Http\Controllers\Api\V2\PublicOrderController::class, 'menu']);
-            Route::post('/order/{storeId}',                [\App\Http\Controllers\Api\V2\PublicOrderController::class, 'checkout'])->middleware('throttle:30,1');
-            Route::get('/order/{storeId}/{receiptNumber}', [\App\Http\Controllers\Api\V2\PublicOrderController::class, 'status']);
+            Route::get('/menu/{storeId}',                                  [\App\Http\Controllers\Api\V2\PublicOrderController::class, 'menu']);
+            Route::post('/order/{storeId}',                                [\App\Http\Controllers\Api\V2\PublicOrderController::class, 'checkout'])->middleware('throttle:30,1');
+            Route::get('/order/{storeId}/{receiptNumber}',                 [\App\Http\Controllers\Api\V2\PublicOrderController::class, 'status']);
+            Route::get('/order/{storeId}/{receiptNumber}/payment-status',  [\App\Http\Controllers\Api\V2\PublicOrderController::class, 'paymentStatus']);
         });
 
     }); // end v2
